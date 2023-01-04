@@ -1,8 +1,9 @@
+import crypt
 from customtkinter import *
 from assets.code.ui import Colors, clear
 from src.auth import login
 from PIL import Image
-
+import bcrypt
 
 class SignInPage(CTkFrame):
     def __init__(self, window: CTk) -> None:
@@ -45,7 +46,7 @@ class SignInPage(CTkFrame):
             text_color=Colors.White,
         ).pack(pady=30)
 
-        usernameEntry = CTkEntry(
+        self.usernameEntry = CTkEntry(
             signinCard,
             width=375,
             height=60,
@@ -57,9 +58,9 @@ class SignInPage(CTkFrame):
             corner_radius=50,
             text_color=Colors.Cadet,
         )
-        usernameEntry.place(x=87, y=147)
+        self.usernameEntry.place(x=87, y=147)
 
-        passwordEntry = CTkEntry(
+        self.passwordEntry = CTkEntry(
             signinCard,
             width=375,
             height=60,
@@ -70,10 +71,11 @@ class SignInPage(CTkFrame):
             justify=CENTER,
             corner_radius=50,
             text_color=Colors.Cadet,
+            show="*",
         )
-        passwordEntry.place(x=87, y=232)
+        self.passwordEntry.place(x=87, y=232)
 
-        repeatPasswordEntry = CTkEntry(
+        self.repeatPasswordEntry = CTkEntry(
             signinCard,
             width=375,
             height=60,
@@ -84,8 +86,9 @@ class SignInPage(CTkFrame):
             justify=CENTER,
             corner_radius=50,
             text_color=Colors.Cadet,
+            show="*",
         )
-        repeatPasswordEntry.place(x=87, y=317)
+        self.repeatPasswordEntry.place(x=87, y=317)
 
         CTkButton(
             signinCard,
@@ -120,3 +123,77 @@ class SignInPage(CTkFrame):
 
         signinCard.bind("<Button-1>", lambda _: self.focus())
         self.bind("<Button-1>", lambda _: self.focus())
+
+    def signin(self):
+        username = self.usernameEntry.get()
+        password = self.passwordEntry.get()
+        repreatPassword = self.repeatPasswordEntry.get()
+
+        user = self.window.curr.execute(
+            "SELECT id FROM 'users' WHERE username=?", (username,)
+        ).fetchone()
+
+        try:
+            self.AlertLabel.destroy()
+        except:
+            pass
+
+        if not user:
+            errors = self.check_password(password)
+            if not errors:
+                if password == repreatPassword:
+                    password = crypt.hashpw(
+                        bytes(password, "ascii"), bcrypt.gensalt(14)
+                    ).decode("ascii")
+
+                    self.window.curr.execute(
+                        "INSERT INTO 'users' (username, password) VALUES (?, ?)",
+                        (username, password),
+                    )
+
+                    self.window.conn.commit()
+
+                    login.LoginPage(self.window)
+                    return
+                else:
+                    self.AlertLabel = CTkLabel(
+                        self.window,
+                        text="Les mots de passe ne correspondent pas !",
+                        fg_color=Colors.Danger,
+                        font=CTkFont(family="Roboto", size=25, weight="bold"),
+                        height=40,
+                    )
+            else:
+                self.AlertLabel = CTkLabel(
+                    self.window,
+                    text=errors[0],
+                    fg_color=Colors.Danger,
+                    font=CTkFont(family="Roboto", size=25, weight="bold"),
+                    height=40,
+                )
+        else:
+            self.AlertLabel = CTkLabel(
+                self.window,
+                text="L'utilisateur existe déja !",
+                fg_color=Colors.Danger,
+                font=CTkFont(family="Roboto", size=25, weight="bold"),
+                height=40,
+            )
+
+        self.AlertLabel.pack(side="bottom", fill="x")
+
+    def check_password(self, pwd) -> list[str]:
+        conds = {
+            "Le mot de passe doit contenir une lettre majuscule !": lambda s: any(
+                x.isupper() for x in s
+            ),
+            "Le mot de passe doit contenir une lettre minuscule !": lambda s: any(
+                x.islower() for x in s
+            ),
+            "Le mot de passe doit contenir un nombre !": lambda s: any(
+                x.isdigit() for x in s
+            ),
+            "Le mot de passe est trop court !": lambda s: len(s) >= 8,
+        }
+
+        return [error for error, cond in conds.items() if not cond(pwd)]
