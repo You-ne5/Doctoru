@@ -1,9 +1,11 @@
 import bcrypt
 from customtkinter import *
-from assets.code.ui import Colors, clear
+from assets.code.ui import Colors, clear, font
 from src.auth import login
+from src.app import home
 from PIL import Image
 import bcrypt
+
 
 class SignInPage(CTkFrame):
     def __init__(self, window: CTk) -> None:
@@ -30,7 +32,7 @@ class SignInPage(CTkFrame):
         CTkLabel(
             self,
             text="DoctoBot",
-            font=CTkFont(family="Roboto", size=96, weight="bold"),
+            font=font(96),
             text_color=Colors.Mandarin,
         ).pack(pady=15)
 
@@ -42,7 +44,7 @@ class SignInPage(CTkFrame):
         CTkLabel(
             signinCard,
             text="Inscription",
-            font=CTkFont(family="Roboto", size=64, weight="bold"),
+            font=font(64),
             text_color=Colors.White,
         ).pack(pady=30)
 
@@ -53,7 +55,7 @@ class SignInPage(CTkFrame):
             fg_color=Colors.White,
             placeholder_text="Nom d'utilisateur",
             placeholder_text_color=Colors.Silver,
-            font=CTkFont(family="Roboto", size=25, weight="bold"),
+            font=font(25),
             justify=CENTER,
             corner_radius=50,
             text_color=Colors.Cadet,
@@ -67,7 +69,7 @@ class SignInPage(CTkFrame):
             fg_color=Colors.White,
             placeholder_text="Mot de passe",
             placeholder_text_color=Colors.Silver,
-            font=CTkFont(family="Roboto", size=25, weight="bold"),
+            font=font(25),
             justify=CENTER,
             corner_radius=50,
             text_color=Colors.Cadet,
@@ -82,7 +84,7 @@ class SignInPage(CTkFrame):
             fg_color=Colors.White,
             placeholder_text="Repetez le mot de passe",
             placeholder_text_color=Colors.Silver,
-            font=CTkFont(family="Roboto", size=25, weight="bold"),
+            font=font(25),
             justify=CENTER,
             corner_radius=50,
             text_color=Colors.Cadet,
@@ -96,8 +98,10 @@ class SignInPage(CTkFrame):
             height=60,
             fg_color=Colors.Mandarin,
             text="S'inscrire",
-            font=CTkFont(family="Roboto", size=32, weight="bold"),
+            font=font(32),
             corner_radius=50,
+            hover_color=Colors.Sepia,
+            command=self.signin,
             text_color=Colors.White,
         ).place(x=125, y=426)
 
@@ -106,7 +110,7 @@ class SignInPage(CTkFrame):
             width=214,
             height=19,
             text_color=Colors.White,
-            font=CTkFont(family="Roboto", size=16, weight="bold"),
+            font=font(16),
             text="Vous avez deja un compte?",
         ).place(x=113, y=491)
 
@@ -115,7 +119,7 @@ class SignInPage(CTkFrame):
             width=105,
             height=19,
             text_color=Colors.Mandarin,
-            font=CTkFont(family="Roboto", size=16, weight="bold"),
+            font=font(16),
             text="Se connecter",
             command=lambda: login.LoginPage(self.window),
             fg_color=Colors.Cadet,
@@ -125,12 +129,12 @@ class SignInPage(CTkFrame):
         self.bind("<Button-1>", lambda _: self.focus())
 
     def signin(self):
-        username = self.usernameEntry.get()
-        password = self.passwordEntry.get()
-        repreatPassword = self.repeatPasswordEntry.get()
+        entryUsername = self.usernameEntry.get()
+        entryPassword = self.passwordEntry.get()
+        entryRepreatPassword = self.repeatPasswordEntry.get()
 
         user = self.window.curr.execute(
-            "SELECT id FROM 'users' WHERE username=?", (username,)
+            "SELECT id FROM 'users' WHERE username=?", (entryUsername,)
         ).fetchone()
 
         try:
@@ -139,46 +143,44 @@ class SignInPage(CTkFrame):
             pass
 
         if not user:
-            errors = self.check_password(password)
+            errors = self.check_password(entryPassword)
             if not errors:
-                if password == repreatPassword:
-                    password = bcrypt.hashpw(
-                        bytes(password, "ascii"), bcrypt.gensalt(14)
+                if entryPassword == entryRepreatPassword:
+                    entryPassword = bcrypt.hashpw(
+                        bytes(entryPassword, "ascii"), bcrypt.gensalt(14)
                     ).decode("ascii")
 
                     self.window.curr.execute(
                         "INSERT INTO 'users' (username, password) VALUES (?, ?)",
-                        (username, password),
+                        (entryUsername, entryPassword),
                     )
 
                     self.window.conn.commit()
 
-                    login.LoginPage(self.window)
+                    userId = self.window.curr.execute(
+                        """SELECT id FROM "users" WHERE username=?""", (entryUsername,)
+                    ).fetchone()[0]
+
+                    self.window.userId = userId
+
+                    home.HomePage(self.window)
                     return
                 else:
-                    self.AlertLabel = CTkLabel(
-                        self.window,
-                        text="Les mots de passe ne correspondent pas !",
-                        fg_color=Colors.Danger,
-                        font=CTkFont(family="Roboto", size=25, weight="bold"),
-                        height=40,
-                    )
+                    alert = "Les mots de passe ne correspondent pas !"
             else:
-                self.AlertLabel = CTkLabel(
-                    self.window,
-                    text=errors[0],
-                    fg_color=Colors.Danger,
-                    font=CTkFont(family="Roboto", size=25, weight="bold"),
-                    height=40,
-                )
+                alert = errors[0]
+
         else:
-            self.AlertLabel = CTkLabel(
-                self.window,
-                text="L'utilisateur existe déja !",
-                fg_color=Colors.Danger,
-                font=CTkFont(family="Roboto", size=25, weight="bold"),
-                height=40,
-            )
+            alert = "L'utilisateur existe déja !"
+
+        self.AlertLabel = CTkLabel(
+            self.window,
+            text=alert,
+            fg_color=Colors.Danger,
+            text_color=Colors.White,
+            font=font(20),
+            height=40,
+        )
 
         self.AlertLabel.pack(side="bottom", fill="x")
 

@@ -3,9 +3,10 @@ from assets.code.ui import Colors, clear
 from src.auth import signin
 from PIL import Image
 import bcrypt
-from os import environ as env
 from src.app import home
 import json
+from assets.code.ui import font
+
 
 class LoginPage(CTkFrame):
     def __init__(self, window: CTk) -> None:
@@ -15,7 +16,7 @@ class LoginPage(CTkFrame):
         self.pack(fill="both", expand=True)
 
         self.window = window
-        
+
         self.view()
 
     def view(self):
@@ -34,7 +35,7 @@ class LoginPage(CTkFrame):
             self,
             text="DoctoBot",
             text_color=Colors.Mandarin,
-            font=CTkFont(family="Roboto", size=96, weight="bold"),
+            font=font(96),
         ).pack(pady=15)
 
         loginCard = CTkFrame(
@@ -52,7 +53,7 @@ class LoginPage(CTkFrame):
         CTkLabel(
             loginCard,
             text="Connexion",
-            font=CTkFont(family="Roboto", size=64, weight="bold"),
+            font=font(64),
             text_color=Colors.White,
         ).pack(pady=30)
 
@@ -63,9 +64,9 @@ class LoginPage(CTkFrame):
             width=375,
             height=60,
             corner_radius=50,
-            font=CTkFont(family="Roboto", size=25, weight="bold"),
+            font=font(25),
             justify=CENTER,
-            text_color=Colors.Cadet
+            text_color=Colors.Cadet,
         )
         self.usernameEntry.place(x=88, y=147)
 
@@ -76,10 +77,10 @@ class LoginPage(CTkFrame):
             width=375,
             height=60,
             corner_radius=50,
-            font=CTkFont(family="Roboto", size=25, weight="bold"),
+            font=font(25),
             justify=CENTER,
             text_color=Colors.Cadet,
-            show="*"
+            show="*",
         )
         self.passwordEntry.place(x=88, y=252)
 
@@ -92,7 +93,7 @@ class LoginPage(CTkFrame):
             text_color=Colors.White,
             hover_color=Colors.Sepia,
             border_color=Colors.White,
-            font=CTkFont(family="Roboto", size=22, weight="bold"),
+            font=font(22),
         )
         self.rememberMeCheck.place(x=105, y=350)
 
@@ -105,8 +106,8 @@ class LoginPage(CTkFrame):
             width=300,
             height=60,
             corner_radius=50,
-            font=CTkFont(family="Roboto", size=30, weight="bold"),
-            command=self.Login
+            font=font(30),
+            command=self.Login,
         ).place(x=125, y=426)
 
         CTkLabel(
@@ -114,7 +115,7 @@ class LoginPage(CTkFrame):
             width=214,
             height=19,
             text_color=Colors.White,
-            font=CTkFont(family="Roboto", size=16, weight="bold"),
+            font=font(16),
             text="Pas encore de compte?",
         ).place(x=126, y=491)
 
@@ -124,7 +125,7 @@ class LoginPage(CTkFrame):
             height=19,
             text_color=Colors.Mandarin,
             hover_color=Colors.Cadet,
-            font=CTkFont(family="Roboto", size=16, weight="bold"),
+            font=font(16),
             command=lambda: signin.SignInPage(self.window),
             text="S'inscrire",
             fg_color=Colors.Cadet,
@@ -133,13 +134,10 @@ class LoginPage(CTkFrame):
         loginCard.bind("<Button-1>", lambda _: self.focus())
         self.bind("<Button-1>", lambda _: self.focus())
 
-
     def Login(self):
 
         entryUsername = self.usernameEntry.get()
         entryPassword = self.passwordEntry.get()
-
-        curr = self.window.curr
 
         try:
             self.AlertLabel.destroy()
@@ -147,13 +145,16 @@ class LoginPage(CTkFrame):
             pass
 
         if entryUsername:
-            user = curr.execute(
-                """SELECT id, password FROM "users" WHERE username=?""", (entryUsername,)
+            user = self.window.curr.execute(
+                """SELECT id, password FROM "users" WHERE username=?""",
+                (entryUsername,),
             ).fetchone()
 
             if user:
                 userId, userPassword = user
-                if bcrypt.checkpw(bytes(entryPassword, "utf-8"), bytes(userPassword, "utf-8")):
+
+                if bcrypt.checkpw(
+                    bytes(entryPassword, "utf-8"), bytes(userPassword, "utf-8")):
                     self.window.userId = userId
                     if self.rememberMeCheck.get():
                         with open("config.json", "w") as f:
@@ -163,27 +164,17 @@ class LoginPage(CTkFrame):
                     return
 
                 else:
-                    self.AlertLabel = CTkLabel(
-                        self,
-                        text="Mot de passe incorrect!",
-                        fg_color=Colors.Danger,
-                        font=CTkFont(family='Roboto', size=15, weight="bold"),
-                        height=40,
-                    )
+                    alert = "Mot de passe incorrect!"
             else:
-                self.AlertLabel = CTkLabel(
-                    self,
-                    text="Nom d'utilisateur incorrect!",
-                    fg_color=Colors.Danger,
-                    font=CTkFont(family='Roboto', size=15, weight="bold"),
-                    height=40,
-                )
-                
+                alert = "Nom d'utilisateur incorrect!"
+
+            self.AlertLabel = CTkLabel(
+                self,
+                text=alert,
+                fg_color=Colors.Danger,
+                text_color=Colors.White,
+                font=font(20),
+                height=40,
+            )
 
             self.AlertLabel.pack(side="bottom", fill="x")
-
-
-
-        
-                
-            

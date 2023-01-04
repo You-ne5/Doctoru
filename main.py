@@ -1,5 +1,4 @@
 import sqlite3
-
 from customtkinter import CTk
 from assets.code.ui import Colors, center
 from src.auth import login
@@ -10,7 +9,6 @@ import json
 class App(CTk):
     def __init__(self) -> None:
         super().__init__(fg_color=Colors.Coral)
-
 
         self.title("Doctobot")
         self.iconbitmap("assets/imgs/Dbot Logo.ico")
@@ -32,20 +30,17 @@ class App(CTk):
                 else:
                     raise
         except:
-            print("except")
             self.userId = None
             login.LoginPage(self)
 
-
     def init_db(self):
         self.curr.execute(
-            """CREATE TABLE IF NOT EXISTS users(
-                id INTEGER NOT NULL UNIQUE, 
-                username string NOT NULL, 
-                password string NOT NULL, 
-                PRIMARY KEY ("id" AUTOINCREMENT)
-                
-                )"""
+            """CREATE TABLE IF NOT EXISTS "users" (
+				"id" INTEGER NOT NULL UNIQUE, 
+				"username" string NOT NULL, 
+				"password" string NOT NULL, 
+				PRIMARY KEY ("id" AUTOINCREMENT)
+				)"""
         )
 
 
