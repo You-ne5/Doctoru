@@ -2,7 +2,10 @@ from customtkinter import *
 from assets.code.ui import Colors, clear
 from src.auth import signin
 from PIL import Image
-
+import bcrypt
+from os import environ as env
+from src.app import home
+import json
 
 class LoginPage(CTkFrame):
     def __init__(self, window: CTk) -> None:
@@ -16,6 +19,7 @@ class LoginPage(CTkFrame):
         self.view()
 
     def view(self):
+
         image = CTkImage(
             light_image=Image.open("assets/imgs/doctor image.png"),
             dark_image=Image.open("assets/imgs/doctor image.png"),
@@ -52,7 +56,7 @@ class LoginPage(CTkFrame):
             text_color=Colors.White,
         ).pack(pady=30)
 
-        usernameEntry = CTkEntry(
+        self.usernameEntry = CTkEntry(
             loginCard,
             placeholder_text="Nom d'utilisateur",
             fg_color=Colors.White,
@@ -61,10 +65,11 @@ class LoginPage(CTkFrame):
             corner_radius=50,
             font=CTkFont(family="Roboto", size=25, weight="bold"),
             justify=CENTER,
+            text_color=Colors.Cadet
         )
-        usernameEntry.place(x=88, y=147)
+        self.usernameEntry.place(x=88, y=147)
 
-        passwordEntry = CTkEntry(
+        self.passwordEntry = CTkEntry(
             loginCard,
             placeholder_text="Entrez le mot de passe",
             fg_color=Colors.White,
@@ -73,10 +78,12 @@ class LoginPage(CTkFrame):
             corner_radius=50,
             font=CTkFont(family="Roboto", size=25, weight="bold"),
             justify=CENTER,
+            text_color=Colors.Cadet,
+            show="*"
         )
-        passwordEntry.place(x=88, y=252)
+        self.passwordEntry.place(x=88, y=252)
 
-        rememberMeCheck = CTkCheckBox(
+        self.rememberMeCheck = CTkCheckBox(
             loginCard,
             text="Se souvenir de moi",
             width=25,
@@ -87,7 +94,7 @@ class LoginPage(CTkFrame):
             border_color=Colors.White,
             font=CTkFont(family="Roboto", size=22, weight="bold"),
         )
-        rememberMeCheck.place(x=105, y=350)
+        self.rememberMeCheck.place(x=105, y=350)
 
         CTkButton(
             loginCard,
@@ -99,6 +106,7 @@ class LoginPage(CTkFrame):
             height=60,
             corner_radius=50,
             font=CTkFont(family="Roboto", size=30, weight="bold"),
+            command=self.Login
         ).place(x=125, y=426)
 
         CTkLabel(
@@ -124,3 +132,58 @@ class LoginPage(CTkFrame):
 
         loginCard.bind("<Button-1>", lambda _: self.focus())
         self.bind("<Button-1>", lambda _: self.focus())
+
+
+    def Login(self):
+
+        entryUsername = self.usernameEntry.get()
+        entryPassword = self.passwordEntry.get()
+
+        curr = self.window.curr
+
+        try:
+            self.AlertLabel.destroy()
+        except:
+            pass
+
+        if entryUsername:
+            user = curr.execute(
+                """SELECT id, password FROM "users" WHERE username=?""", (entryUsername,)
+            ).fetchone()
+
+            if user:
+                userId, userPassword = user
+                if bcrypt.checkpw(bytes(entryPassword, "utf-8"), bytes(userPassword, "utf-8")):
+                    self.window.userId = userId
+                    if self.rememberMeCheck.get():
+                        with open("config.json", "w") as f:
+                            json.dump({"userId": userId}, f)
+
+                    home.HomePage(self.window)
+                    return
+
+                else:
+                    self.AlertLabel = CTkLabel(
+                        self,
+                        text="Mot de passe incorrect!",
+                        fg_color=Colors.Danger,
+                        font=CTkFont(family='Roboto', size=15, weight="bold"),
+                        height=40,
+                    )
+            else:
+                self.AlertLabel = CTkLabel(
+                    self,
+                    text="Nom d'utilisateur incorrect!",
+                    fg_color=Colors.Danger,
+                    font=CTkFont(family='Roboto', size=15, weight="bold"),
+                    height=40,
+                )
+                
+
+            self.AlertLabel.pack(side="bottom", fill="x")
+
+
+
+        
+                
+            
