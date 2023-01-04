@@ -1,5 +1,6 @@
 from customtkinter import *
 from assets.code.ui import Colors, clear
+from src.auth import login
 from PIL import Image
 
 
@@ -9,40 +10,43 @@ class SignInPage(CTkFrame):
         super().__init__(window, corner_radius=0, fg_color=Colors.Coral)
         self.pack(fill="both", expand=True)
 
-        bg_image = CTkImage(
+        self.window = window
+
+        self.view()
+
+    def view(self):
+        image = CTkImage(
             light_image=Image.open("assets/imgs/doctor image.png"),
             dark_image=Image.open("assets/imgs/doctor image.png"),
             size=(490, 832),
         )
 
-        label1 = CTkLabel(self, image=bg_image, text="")
-        label1.image = bg_image
+        backgroundImage = CTkLabel(self, image=image, text="")
+        backgroundImage.image = image
 
-        label1.place(x=0, y=0)
+        backgroundImage.place(x=0, y=0)
 
-        label = CTkLabel(
+        CTkLabel(
             self,
             text="DoctoBot",
             font=CTkFont(family="Roboto", size=96, weight="bold"),
             text_color=Colors.Mandarin,
-        )
-        label.pack(pady=15)
+        ).pack(pady=15)
 
-        card = CTkFrame(
+        signinCard = CTkFrame(
             self, corner_radius=50, fg_color=Colors.Cadet, width=550, height=550
         )
-        card.place(relx=0.5, rely=0.5, anchor=CENTER, width=550, height=550)
+        signinCard.place(relx=0.5, rely=0.52, anchor=CENTER, width=550, height=550)
 
-        label = CTkLabel(
-            card,
+        CTkLabel(
+            signinCard,
             text="Inscription",
             font=CTkFont(family="Roboto", size=64, weight="bold"),
             text_color=Colors.White,
-        )
-        label.pack(pady=30)
+        ).pack(pady=30)
 
-        CTkEntry(
-            card,
+        usernameEntry = CTkEntry(
+            signinCard,
             width=375,
             height=60,
             fg_color=Colors.White,
@@ -52,10 +56,11 @@ class SignInPage(CTkFrame):
             justify=CENTER,
             corner_radius=50,
             text_color=Colors.Cadet,
-        ).place(x=87, y=147)
+        )
+        usernameEntry.place(x=87, y=147)
 
-        CTkEntry(
-            card,
+        passwordEntry = CTkEntry(
+            signinCard,
             width=375,
             height=60,
             fg_color=Colors.White,
@@ -65,10 +70,11 @@ class SignInPage(CTkFrame):
             justify=CENTER,
             corner_radius=50,
             text_color=Colors.Cadet,
-        ).place(x=87, y=232)
+        )
+        passwordEntry.place(x=87, y=232)
 
-        CTkEntry(
-            card,
+        repeatPasswordEntry = CTkEntry(
+            signinCard,
             width=375,
             height=60,
             fg_color=Colors.White,
@@ -78,10 +84,11 @@ class SignInPage(CTkFrame):
             justify=CENTER,
             corner_radius=50,
             text_color=Colors.Cadet,
-        ).place(x=87, y=317)
+        )
+        repeatPasswordEntry.place(x=87, y=317)
 
         CTkButton(
-            card,
+            signinCard,
             width=300,
             height=60,
             fg_color=Colors.Mandarin,
@@ -92,19 +99,24 @@ class SignInPage(CTkFrame):
         ).place(x=125, y=426)
 
         CTkLabel(
-            card,
+            signinCard,
             width=214,
             height=19,
             text_color=Colors.White,
             font=CTkFont(family="Roboto", size=16, weight="bold"),
             text="Vous avez deja un compte?",
         ).place(x=113, y=491)
+
         CTkButton(
-            card,
+            signinCard,
             width=105,
             height=19,
             text_color=Colors.Mandarin,
             font=CTkFont(family="Roboto", size=16, weight="bold"),
             text="Se connecter",
+            command=lambda: login.LoginPage(self.window),
             fg_color=Colors.Cadet,
         ).place(x=332, y=488)
+
+        signinCard.bind("<Button-1>", lambda _: self.focus())
+        self.bind("<Button-1>", lambda _: self.focus())
