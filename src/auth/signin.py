@@ -1,4 +1,4 @@
-import crypt
+import bcrypt
 from customtkinter import *
 from assets.code.ui import Colors, clear
 from src.auth import login
@@ -142,7 +142,7 @@ class SignInPage(CTkFrame):
             errors = self.check_password(password)
             if not errors:
                 if password == repreatPassword:
-                    password = crypt.hashpw(
+                    password = bcrypt.hashpw(
                         bytes(password, "ascii"), bcrypt.gensalt(14)
                     ).decode("ascii")
 
@@ -184,16 +184,7 @@ class SignInPage(CTkFrame):
 
     def check_password(self, pwd) -> list[str]:
         conds = {
-            "Le mot de passe doit contenir une lettre majuscule !": lambda s: any(
-                x.isupper() for x in s
-            ),
-            "Le mot de passe doit contenir une lettre minuscule !": lambda s: any(
-                x.islower() for x in s
-            ),
-            "Le mot de passe doit contenir un nombre !": lambda s: any(
-                x.isdigit() for x in s
-            ),
-            "Le mot de passe est trop court !": lambda s: len(s) >= 8,
+            "Le mot de passe est trop court !": lambda s: len(s) >= 5,
         }
 
         return [error for error, cond in conds.items() if not cond(pwd)]
