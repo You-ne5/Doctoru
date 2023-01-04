@@ -12,3 +12,14 @@ class Colors:
     Warning     = "#EED202"
     Danger      = "#FF002D"
     
+def clear(frame):
+    for widget in frame.winfo_children():
+        widget.destroy()
+
+def center(w, h, frame):
+    ws = frame.winfo_screenwidth()
+    hs = frame.winfo_screenheight()
+    x = (ws / 2) - (w / 2)
+    y = (hs / 2) - (h / 2)
+    frame.geometry("%dx%d+%d+%d" % (w, h, x, y))
+    clear(frame)
