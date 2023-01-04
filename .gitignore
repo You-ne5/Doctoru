@@ -2,3 +2,5 @@ tests/
 *.pyc
 *.db
 .venv/
+*.json
+
