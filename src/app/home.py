@@ -315,30 +315,21 @@ class Page(CTkFrame):
 
 
 class HomePage(CTkFrame):
-    def __init__(self, window: CTk) -> None:
-        clear(window)
+    def __init__(self, master: CTkFrame) -> None:
+        super().__init__(master, corner_radius=0, fg_color=Colors.Coral)
+        
+        self.window = master.window
 
-        super().__init__(window, corner_radius=0, fg_color=Colors.Coral)
-        self.pack(fill="both", expand=True)
-
-        self.window = window
+        self.master = master
 
         self.view()
 
     def view(self):
-        infoBar = infobar.InfoBar(self)
-        infoBar.place(x=0, y=0, relwidth=1, height=30)
-
-        navBar = navbar.NavBar(self)
-        navBar.place(x=0, y=30, relwidth=1, height=120)
-
-        navBar.select(navBar.homeButton)
-
         dailyMeetings = DailyMeetings(self)
-        dailyMeetings.place(x=0, y=150, width=400, height=682)
+        dailyMeetings.place(x=0, y=0, width=400, height=682)
 
         actionBar = ActionBar(self)
-        actionBar.place(x=400, y=712, width=880, height=120)
+        actionBar.place(x=400, y=562, width=880, height=120)
 
         page = Page(self)
-        page.place(x=400, y=150, width=880, height=562)
+        page.place(x=400, y=0, width=880, height=562)

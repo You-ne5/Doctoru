@@ -2,7 +2,7 @@ import bcrypt
 from customtkinter import *
 from assets.code.ui import Colors, clear, font
 from src.auth import login
-from src.app import home
+from src.app import page
 from PIL import Image
 import bcrypt
 
@@ -163,7 +163,7 @@ class SignInPage(CTkFrame):
 
                     self.window.userId = userId
 
-                    home.HomePage(self.window)
+                    page.Page(self.window)
                     return
                 else:
                     alert = "Les mots de passe ne correspondent pas !"

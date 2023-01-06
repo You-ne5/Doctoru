@@ -3,7 +3,7 @@ from assets.code.ui import Colors, clear
 from src.auth import signin
 from PIL import Image
 import bcrypt
-from src.app import home
+from src.app import page
 import json
 from assets.code.ui import font
 
@@ -160,7 +160,7 @@ class LoginPage(CTkFrame):
                         with open("config.json", "w") as f:
                             json.dump({"userId": userId}, f)
 
-                    home.HomePage(self.window)
+                    page.Page(self.window)
                     return
 
                 else:

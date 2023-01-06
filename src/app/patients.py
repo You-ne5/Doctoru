@@ -241,26 +241,17 @@ class PatientsList(CTkFrame):
 
 
 class PatientsPage(CTkFrame):
-    def __init__(self, window: CTk) -> None:
-        clear(window)
-
-        super().__init__(window, corner_radius=0, fg_color=Colors.Coral)
+    def __init__(self, master: CTk) -> None:
+        super().__init__(master, corner_radius=0, fg_color=Colors.Coral)
         self.pack(fill="both", expand=True)
 
-        self.window = window
+        self.master = master
         
         self.view()
 
     def view(self):
-        infoBar = infobar.InfoBar(self)
-        infoBar.place(x=0, y=0, relwidth=1, height=30)
-
-        navBar = navbar.NavBar(self)
-        navBar.place(x=0, y=30, relwidth=1, height=120)
-        navBar.select(navBar.patientsButton)
+        patientlist = PatientsList(self)
+        patientlist.place(x=0, y=0, width=400, height=682)
 
         pageframe = PageFrame(self)
-        pageframe.place(x=399, y=150, width=879, height=681)
-
-        patientlist = PatientsList(self)
-        patientlist.place(x=0, y=150, width=400, height=682)
+        pageframe.place(x=399, y=0, width=879, height=681)

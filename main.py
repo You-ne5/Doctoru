@@ -2,7 +2,7 @@ import sqlite3
 from customtkinter import CTk
 from assets.code.ui import Colors, center
 from src.auth import login
-from src.app import home
+from src.app import page
 import json
 
 class App(CTk):
@@ -25,12 +25,14 @@ class App(CTk):
                 config = json.load(f)
                 if config and config["userId"]:
                     self.userId = config["userId"]
-                    home.HomePage(self)
+                    page.Page(self)
                 else:
                     raise
-        except:
-            self.userId = None
-            login.LoginPage(self)
+        except Exception as error:
+            if not isinstance(error, TypeError):
+                print(error)
+                self.userId = None
+                login.LoginPage(self)
 
     def init_db(self):
         self.curr.execute(
