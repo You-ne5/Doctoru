@@ -240,7 +240,7 @@ class PatientsList(CTkFrame):
             self.load()
 
 
-class PatientPage(CTkFrame):
+class PatientsPage(CTkFrame):
     def __init__(self, window: CTk) -> None:
         clear(window)
 
