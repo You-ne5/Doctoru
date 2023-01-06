@@ -4,7 +4,6 @@ from assets.code.ui import Colors, center
 from src.auth import login
 from src.app import home
 import json
-from src.app.patients import PatientPage
 
 class App(CTk):
     def __init__(self) -> None:
@@ -33,10 +32,6 @@ class App(CTk):
             self.userId = None
             login.LoginPage(self)
 
-
-
-
-
     def init_db(self):
         self.curr.execute(
             """CREATE TABLE IF NOT EXISTS "users" (
@@ -50,19 +45,23 @@ class App(CTk):
         self.curr.execute(
             """CREATE TABLE IF NOT EXISTS "patients" (
 				"id" INTEGER NOT NULL UNIQUE, 
-				"name" string not null,
-                "lastName" string not null,
-                "dateOfBirth" timestamp,
-                "gender" string not null,
-                "phoneNumber" integer,
-                "keywords" string,
-                "maladieChronique",
+				"firstName" STRING NOT NULL,
+                "lastName" STRING NOT NULL,
+                "dateOfBirth" TIMESTAMP NOT NULL,
+                "gender" STRING NOT NULL,
+                "phoneNumber" INTEGER,
+                "keywords" STRING,
+                "maladieChronique" STRING,
 				PRIMARY KEY ("id" AUTOINCREMENT)
 				)"""
         )
-    
-    
-        
+
+        self.curr.execute("""CREATE TABLE IF NOT EXISTS "meetings" (
+            "id" INTEGER NOT NULL UNIQUE, 
+            "patientId" INTEGER NOT NULL UNIQUE,
+            "datetime" TIMESTAMP,
+            PRIMARY KEY ("id" AUTOINCREMENT)
+        )""")
 
 
 if __name__ == "__main__":
