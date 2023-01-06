@@ -69,17 +69,18 @@ class DailyMeetings(CTkFrame):
         ).fetchall()
         pages = []
 
-        for patientId, dt in meetings:
-            if not pages or len(pages[-1]) == 4:
-                pages.append([])
+        if pages:
+            for patientId, dt in meetings:
+                if not pages or len(pages[-1]) == 4:
+                    pages.append([])
 
-            dt = strToDatetime(dt)
-            if datetime.now().date() == dt.date():
-                pages[-1].append((patientId, dt))
+                dt = strToDatetime(dt)
+                if datetime.now().date() == dt.date():
+                    pages[-1].append((patientId, dt))
 
-        for patientId, dt in pages[self.page]:
-            meetingCard = Meeting(self.meetingsFrame, patientId, dt)
-            meetingCard.pack(pady=15)
+            for patientId, dt in pages[self.page]:
+                meetingCard = Meeting(self.meetingsFrame, patientId, dt)
+                meetingCard.pack(pady=15)
 
         cursor = CTkFrame(
             self.meetingsFrame, width=195, height=40, fg_color=Colors.Cadet
