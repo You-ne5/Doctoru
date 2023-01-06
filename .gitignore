@@ -3,3 +3,5 @@ tests/
 *.db
 .venv/
 *.json
+.vscode/
+test.py
