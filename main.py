@@ -60,7 +60,7 @@ class App(CTk):
 
         self.curr.execute("""CREATE TABLE IF NOT EXISTS "meetings" (
             "id" INTEGER NOT NULL UNIQUE, 
-            "patientId" INTEGER NOT NULL
+            "patientId" INTEGER NOT NULL,
             "datetime" TIMESTAMP NOT NULL,
             PRIMARY KEY ("id" AUTOINCREMENT)
         )""")
