@@ -1,7 +1,13 @@
 from customtkinter import *
-from assets.code.ui import Colors, font
+from assets.code.ui import Colors, font, clear
 from PIL import Image
 from src.app import home, patients
+
+def select(master, button: CTkButton):
+    for widget in master.winfo_children():
+            if isinstance(widget, CTkButton):
+                widget.configure(fg_color=Colors.Cadet)
+    button.configure(fg_color=Colors.Mandarin)
 
 
 class NavBar(CTkFrame):
@@ -12,7 +18,7 @@ class NavBar(CTkFrame):
             self,
             fg_color=Colors.Cadet,
             hover_color=Colors.Sepia,
-            command=lambda: [self.select(self.homeButton), home.HomePage(master).place(x=0, y=150, width=1280, height=682)],
+            command=lambda: [select(self, self.homeButton), home.HomePage(master).place(x=0, y=150, width=1280, height=682)],
             corner_radius=10,
             width=70,
             height=70,
@@ -31,7 +37,7 @@ class NavBar(CTkFrame):
             self,
             fg_color=Colors.Cadet,
             hover_color=Colors.Sepia,
-            command=lambda: [self.select(self.patientsButton), patients.PatientsPage(master).place(x=0, y=150, width=1280, height=682)],
+            command=lambda: [select(self,self.patientsButton), patients.PatientsPage(master).place(x=0, y=150, width=1280, height=682)],
             corner_radius=10,
             width=70,
             height=70,
@@ -50,7 +56,7 @@ class NavBar(CTkFrame):
             self,
             fg_color=Colors.Cadet,
             hover_color=Colors.Sepia,
-            command=lambda: self.select(self.agendaButton),
+            command=lambda: select(self,self.agendaButton),
             corner_radius=10,
             width=70,
             height=70,
@@ -69,7 +75,7 @@ class NavBar(CTkFrame):
             self,
             fg_color=Colors.Cadet,
             hover_color=Colors.Sepia,
-            command=lambda: self.select(self.statsButton),
+            command=lambda: select(self,self.statsButton),
             corner_radius=10,
             width=70,
             height=70,
@@ -88,7 +94,7 @@ class NavBar(CTkFrame):
             self,
             fg_color=Colors.Cadet,
             hover_color=Colors.Sepia,
-            command=lambda: self.select(self.cashRegisterButton),
+            command=lambda: select(self,self.cashRegisterButton),
             corner_radius=10,
             width=70,
             height=70,
@@ -108,7 +114,7 @@ class NavBar(CTkFrame):
             self,
             fg_color=Colors.Cadet,
             hover_color=Colors.Sepia,
-            command=lambda: self.select(self.settingsButton),
+            command=lambda: select(self,self.settingsButton),
             corner_radius=10,
             width=70,
             height=70,
@@ -127,7 +133,7 @@ class NavBar(CTkFrame):
             self,
             fg_color=Colors.Cadet,
             hover_color=Colors.Sepia,
-            command=lambda: self.select(self.logoutButton),
+            command=lambda: select(self, self.logoutButton),
             corner_radius=10,
             width=70,
             height=70,
@@ -142,8 +148,3 @@ class NavBar(CTkFrame):
             self, text="Deconnexion", font=font(16), text_color=Colors.White
         ).place(x=1151, y=90)
 
-    def select(self, button: CTkButton):
-        for widget in self.winfo_children():
-            if isinstance(widget, CTkButton):
-                widget.configure(fg_color=Colors.Cadet)
-        button.configure(fg_color=Colors.Mandarin)
