@@ -67,8 +67,8 @@ class DailyMeetings(CTkFrame):
         meetings = self.window.curr.execute(
             """SELECT patientId, datetime FROM "meetings" """
         ).fetchall()
-        pages = []
 
+        pages = []
 
         for patientId, dt in meetings:
             if not pages or len(pages[-1]) == 4:
@@ -76,7 +76,10 @@ class DailyMeetings(CTkFrame):
 
             dt = strToDatetime(dt)
             if datetime.now().date() == dt.date():
-                pages[-1].append((patientId, dt))
+
+                firstname, lastname = self.window.curr.execute(""" SELECT firstName, lastName FROM patients WHERE id = ?""", (patientId,)).fetchone()
+
+                pages[-1].append((" ".join([firstname.capitalize(), lastname.capitalize()]), dt))
 
         for patientId, dt in pages[self.page]:
             meetingCard = Meeting(self.meetingsFrame, patientId, dt)

@@ -51,7 +51,7 @@ class App(CTk):
                 "lastName" TEXT NOT NULL,
                 "dateOfBirth" TIMESTAMP NOT NULL,
                 "gender" TEXT NOT NULL,
-                "phoneNumber" INTEGER,
+                "phoneNumber" TEXT,
                 "keywords" TEXT,
                 "maladieChronique" TEXT,
 				PRIMARY KEY ("id" AUTOINCREMENT)
@@ -79,7 +79,8 @@ class App(CTk):
 
         self.curr.execute("""CREATE TABLE IF NOT EXISTS "waiting" (
             "id" INTEGER NOT NULL UNIQUE, 
-            "patientName" TEXT NOT NULL,
+            "patientFirstName" TEXT NOT NULL,
+            "patientLastName" TEXT NOT NULL,
             PRIMARY KEY ("id" AUTOINCREMENT)
         )""")
 
