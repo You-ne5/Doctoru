@@ -47,13 +47,13 @@ class App(CTk):
         self.curr.execute(
             """CREATE TABLE IF NOT EXISTS "patients" (
 				"id" INTEGER NOT NULL UNIQUE, 
-				"firstName" STRING NOT NULL,
-                "lastName" STRING NOT NULL,
+				"firstName" TEXT NOT NULL,
+                "lastName" TEXT NOT NULL,
                 "dateOfBirth" TIMESTAMP NOT NULL,
-                "gender" STRING NOT NULL,
-                "phoneNumber" STRING,
-                "keywords" STRING,
-                "maladieChronique" STRING,
+                "gender" TEXT NOT NULL,
+                "phoneNumber" INTEGER,
+                "keywords" TEXT,
+                "maladieChronique" TEXT,
 				PRIMARY KEY ("id" AUTOINCREMENT)
 				)"""
         )
@@ -61,10 +61,27 @@ class App(CTk):
         self.curr.execute("""CREATE TABLE IF NOT EXISTS "meetings" (
             "id" INTEGER NOT NULL UNIQUE, 
             "patientId" INTEGER NOT NULL,
-            "datetime" TIMESTAMP,
+            "datetime" TIMESTAMP NOT NULL,
             PRIMARY KEY ("id" AUTOINCREMENT)
         )""")
 
+        self.curr.execute("""CREATE TABLE IF NOT EXISTS "visits" (
+            "id" INTEGER NOT NULL UNIQUE, 
+            "patientId" INTEGER NOT NULL,
+            "datetime" TIMESTAMP NOT NULL,
+            "reason" TEXT NOT NULL,
+            "height" INTEGER NOT NULL,
+            "weight" REAL NOT NULL,
+            "conclusion" TEXT NOT NULL,
+            "montant" REAL NOT NULL,
+            PRIMARY KEY ("id" AUTOINCREMENT)
+        )""")
+
+        self.curr.execute("""CREATE TABLE IF NOT EXISTS "waiting" (
+            "id" INTEGER NOT NULL UNIQUE, 
+            "patientName" TEXT NOT NULL,
+            PRIMARY KEY ("id" AUTOINCREMENT)
+        )""")
 
 if __name__ == "__main__":
     app = App()
