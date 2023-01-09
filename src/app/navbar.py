@@ -2,6 +2,8 @@ from customtkinter import *
 from assets.code.ui import Colors, font, clear
 from PIL import Image
 from src.app import home, patients
+from src.auth import login
+import json
 
 def select(master, button: CTkButton):
     for widget in master.winfo_children():
@@ -12,7 +14,9 @@ def select(master, button: CTkButton):
 
 class NavBar(CTkFrame):
     def __init__(self, master: CTkFrame):
-        super().__init__(master, height=120, corner_radius=0, fg_color=Colors.Cadet)
+        super().__init__(master.window, height=120, corner_radius=0, fg_color=Colors.Cadet)
+
+        self.window = master.window
 
         self.homeButton = CTkButton(
             self,
@@ -133,7 +137,7 @@ class NavBar(CTkFrame):
             self,
             fg_color=Colors.Cadet,
             hover_color=Colors.Sepia,
-            command=lambda: select(self, self.logoutButton),
+            command=lambda: self.logout(),
             corner_radius=10,
             width=70,
             height=70,
@@ -147,4 +151,10 @@ class NavBar(CTkFrame):
         CTkLabel(
             self, text="Deconnexion", font=font(16), text_color=Colors.White
         ).place(x=1151, y=90)
+
+    def logout(self):
+        self.window.userId = None
+        with open("config.json", "w") as f:
+            json.dump({"userId": None}, f)
+        login.LoginPage(self.window)
 

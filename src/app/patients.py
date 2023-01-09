@@ -1,15 +1,15 @@
 from datetime import datetime
 from customtkinter import *
 from assets.code.ui import clear, Colors, font
-from src.app import navbar
 from PIL import Image
-from src.app.logic import calculateAge, wait
-import asyncio
+from assets.code.logic import calculateAge, strToDatetime
 
 class AddPatient(CTkFrame):
     def __init__(self, master: CTkFrame):
         super().__init__(master, corner_radius=0, fg_color=Colors.Coral)
+
         self.master = master
+        self.window = master.window
         self.view()
 
     def view(self):
@@ -25,11 +25,11 @@ class AddPatient(CTkFrame):
         )
         title.pack(pady=15)
 
-        add_patient_card = CTkFrame(self, corner_radius=20, fg_color=Colors.Cadet)
-        add_patient_card.place(x=21, y=120, width=839, height=496)
+        addPatientCard = CTkFrame(self, corner_radius=20, fg_color=Colors.Cadet)
+        addPatientCard.place(x=21, y=120, width=839, height=496)
 
-        self.firstName = CTkEntry(
-            add_patient_card,
+        self.lastNameEntry = CTkEntry(
+            addPatientCard,
             placeholder_text="Nom",
             justify=CENTER,
             font=font(23),
@@ -38,10 +38,10 @@ class AddPatient(CTkFrame):
             corner_radius=14,
             fg_color=Colors.White,
         )
-        self.firstName.place(x=50, y=34, width=300, height=46)
+        self.lastNameEntry.place(x=50, y=34, width=300, height=46)
 
-        self.lastName = CTkEntry(
-            add_patient_card,
+        self.firstNameEntry = CTkEntry(
+            addPatientCard,
             placeholder_text="Prénom",
             justify=CENTER,
             font=font(23),
@@ -50,10 +50,10 @@ class AddPatient(CTkFrame):
             corner_radius=14,
             fg_color=Colors.White,
         )
-        self.lastName.place(x=50, y=129, width=300, height=46)
+        self.firstNameEntry.place(x=50, y=129, width=300, height=46)
 
-        self.dateOfBirth = CTkEntry(
-            add_patient_card,
+        self.dateOfBirthEntry = CTkEntry(
+            addPatientCard,
             placeholder_text="Date de naissance",
             justify=CENTER,
             font=font(23),
@@ -62,11 +62,11 @@ class AddPatient(CTkFrame):
             corner_radius=14,
             fg_color=Colors.White,
         )
-        self.dateOfBirth.place(x=50, y=220, width=300, height=46)
+        self.dateOfBirthEntry.place(x=50, y=220, width=300, height=46)
 
 
-        self.Genre = CTkComboBox(
-            add_patient_card,
+        self.GenderEntry = CTkComboBox(
+            addPatientCard,
             values= ["Genre", "Garçon", "Fille"],
             font=font(20),
             justify=CENTER,
@@ -78,11 +78,11 @@ class AddPatient(CTkFrame):
             height=46,
             dropdown_font=font(20)
         )
-        self.Genre.place(x=51, y=313)
+        self.GenderEntry.place(x=51, y=313)
 
 
-        self.maladie_chronique = CTkEntry(
-            add_patient_card,
+        self.maladiesChroniquesEntry = CTkEntry(
+            addPatientCard,
             placeholder_text="Maladies Chroniques",
             justify=CENTER,
             font=font(23),
@@ -91,10 +91,10 @@ class AddPatient(CTkFrame):
             corner_radius=14,
             fg_color=Colors.White,
         )
-        self.maladie_chronique.place(x=480, y=34, width=300, height=46)
+        self.maladiesChroniquesEntry.place(x=480, y=34, width=300, height=46)
 
-        self.phoneNumber = CTkEntry(
-            add_patient_card,
+        self.phoneNumberEntry = CTkEntry(
+            addPatientCard,
             placeholder_text="Téléphone (optionnel)",
             justify=CENTER,
             font=font(23),
@@ -103,10 +103,10 @@ class AddPatient(CTkFrame):
             corner_radius=14,
             fg_color=Colors.White,
         )
-        self.phoneNumber.place(x=480, y=126, width=300, height=46)
+        self.phoneNumberEntry.place(x=480, y=126, width=300, height=46)
 
-        self.keywords = CTkEntry(
-            add_patient_card,
+        self.keywordsEntry = CTkEntry(
+            addPatientCard,
             placeholder_text="Mots clés(optionel)",
             justify=CENTER,
             font=font(23),
@@ -115,10 +115,10 @@ class AddPatient(CTkFrame):
             corner_radius=14,
             fg_color=Colors.White,
         )
-        self.keywords.place(x=480, y=223, width=300, height=46)
+        self.keywordsEntry.place(x=480, y=223, width=300, height=46)
 
         CTkButton(
-            add_patient_card,
+            addPatientCard,
             fg_color=Colors.Mandarin,
             corner_radius=18,
             text="Ajouter",
@@ -135,39 +135,41 @@ class AddPatient(CTkFrame):
             except:
                 return None
 
-        firstName = self.firstName.get()
-        lastName = self.lastName.get()
-        dateOfBirth = dateofBirthcheck(self.dateOfBirth.get())
-        genre = self.Genre.get() if self.Genre.get() in ["Fille", "Garçon"] else None
-        maladieChronique = (self.maladie_chronique.get() if self.maladie_chronique.get() else None)
-        phoneNumber = self.phoneNumber.get() if self.phoneNumber.get() else None
-        keywords = self.keywords.get() if self.keywords.get() else None
+        firstName = self.firstNameEntry.get()
+        lastName = self.lastNameEntry.get()
+        dateOfBirth = dateofBirthcheck(self.dateOfBirthEntry.get())
+        genre = self.GenderEntry.get() if self.GenderEntry.get() in ["Fille", "Garçon"] else None
+        maladiesChroniques = (self.maladiesChroniquesEntry.get() if self.maladiesChroniquesEntry.get() else None)
+        phoneNumber = self.phoneNumberEntry.get() if self.phoneNumberEntry.get() else None
+        keywords = self.keywordsEntry.get() if self.keywordsEntry.get() else None
+
+        try:
+            self.AlertLabel.destroy()
+        except:
+            pass
 
         if firstName and lastName and dateOfBirth and genre:
-            self.master.window.curr.execute(
-                """INSERT INTO "patients" (firstName, lastName, dateOfBirth, gender, phoneNumber, keywords, maladieChronique) VALUES (?,?,?,?,?,?,?)"""
+            self.window.curr.execute(
+                """INSERT INTO "patients" (firstName, lastName, dateOfBirth, gender, phoneNumber, keywords, maladiesChroniques) VALUES (?,?,?,?,?,?,?)"""
                 "",
                 (
                     firstName,
                     lastName,
-                    dateOfBirth,
+                    dateOfBirth.strftime("%d/%m/%Y"),
                     genre,
                     phoneNumber,
                     keywords,
-                    maladieChronique,
+                    maladiesChroniques,
                 ),
             )
-            self.master.window.conn.commit()
+            self.window.conn.commit()
 
-            self.successframe = CTkLabel(self, text="Patient Ajouté avec succes", font=font(25), fg_color=Colors.Success, text_color=Colors.White)
-            self.successframe.place(x=0, y=640, width=880, height=45)
+            self.AlertLabel = CTkLabel(self, text="Patient ajouté avec succes", font=font(25), fg_color=Colors.Success, text_color=Colors.White, height=45)
+            self.AlertLabel.place(x=0,y=637)
 
         else:
-            self.errorframe = CTkLabel(self, text="Veuillez entrer toute les informations requise correctement", font=font(25), fg_color=Colors.Danger, text_color=Colors.White)
-            self.errorframe.place(x=0, y=640, width=880, height=45)
-
-
-            
+            self.AlertLabel = CTkLabel(self, text="Veuillez entrer toute les informations requise correctement", font=font(25), fg_color=Colors.Danger, text_color=Colors.White, height=45)
+            self.AlertLabel.place(x=0,y=637, relwidth=1)
 
 
 class PatientsList(CTkFrame):
@@ -175,12 +177,13 @@ class PatientsList(CTkFrame):
         super().__init__(master, corner_radius=0, fg_color=Colors.Cadet)
 
         self.master = master
-        self.page = 0
-        self.button = None
+        self.window = master.window
+        self.currentPage = 0
+        self.SelectedPatient = None
+
         self.view()
 
     def view(self):
-
         header = CTkFrame(self, fg_color=Colors.Mandarin, corner_radius=0, height=75)
         header.pack(fill="x")
 
@@ -200,190 +203,203 @@ class PatientsList(CTkFrame):
                 light_image=Image.open("assets/imgs/add patient icon.png"),
                 size=(50, 50),
             ),
-            command=lambda: AddPatient(self.master).place(
-                x=400, y=0, width=880, height=680
-            ),
+            command=lambda: [self.load(), AddPatient(self.master).place(x=400, y=0, width=880, height=680)]
         ).place(x=326)
 
-        searchPatient = CTkEntry(
+        self.searchPatient = CTkEntry(
             self,
             placeholder_text="Rechercher un patient...",
             height=25,
-            width=400,
             font=font(15),
             text_color=Colors.Cadet,
             fg_color=Colors.White,
-            bg_color=Colors.Coral,
             border_width=0,
             corner_radius=0,
         )
-        searchPatient.pack()
+        self.searchPatient.pack(fill="x")
 
-        self.patientsframe = CTkFrame(self, fg_color=Colors.Cadet)
-        self.patientsframe.place(x=0, y=100, width=400, height=582)
+        self.patientsFrame = CTkFrame(self, fg_color=Colors.Cadet)
+        self.patientsFrame.pack(fill="both", expand=True)
 
         self.load()
 
-        for widget in self.master.winfo_children():
+        for widget in self.master.window.winfo_children():
             widget.bind("<Button-1>", lambda _: self.focus())
 
-    def select(self, button):
-        for btn in self.btns:
-            btn.configure(fg_color=Colors.Coral)
-        button.configure(fg_color=Colors.Mandarin)
-        self.button = button
+        self.searchPatient.bind("<Key>", lambda _: self.load())
 
     def load(self):
-        clear(self.patientsframe)
+        clear(self.patientsFrame)
 
-        pages = []
         patients = self.master.master.window.curr.execute(
-            """SELECT * FROM "patients" """
+            """SELECT id, firstName, lastName, dateOfBirth FROM "patients" """
         ).fetchall()
 
-        for patient in patients:
+        pages = []
+
+        search = self.searchPatient.get().lower()
+
+        for id, firstName, lastName, dateOfBirth in patients:
             if not pages or len(pages[-1]) == 4:
                 pages.append([])
-            pages[-1].append(patient)
+            
+            if search: 
+                if search in firstName.lower() or search in lastName.lower() or search in dateOfBirth:   
+                    pages[-1].append((id, firstName, lastName, dateOfBirth))
+            else:
+                pages[-1].append((id, firstName, lastName, dateOfBirth))
 
-        self.btns = {}
+        self.patientsButtons = {}
 
-        for patientInfo in pages[self.page]:
-            patientcard = CTkFrame(
-                self.patientsframe,
+        for id, firstName, lastName, dateOfBirth in pages[self.currentPage]:
+            patientCard = CTkFrame(
+                self.patientsFrame,
                 width=350,
                 height=100,
                 corner_radius=20,
                 fg_color=Colors.Coral,
             )
-            patientcard.pack(pady=15)
+            patientCard.pack(pady=15)
 
-            patient_select = CTkButton(
-                patientcard,
-                text=" ".join([patientInfo[1], patientInfo[2]]),
+            patientButton = CTkButton(
+                patientCard,
+                text=f"{firstName.capitalize()} {lastName.capitalize()}",
                 font=font(30),
+                corner_radius=15,
                 height=41,
-                width=35 * len([patientInfo[1], patientInfo[2]]),
-                hover_color=Colors.Mandarin,
+                width=35 * len([firstName, lastName]),
+                hover_color=Colors.Cadet,
+                text_color=Colors.Mandarin,
                 fg_color=Colors.Coral,
                 command=lambda: None,
             )
-            patient_select.place(x=17, y=11)
+            patientButton.place(x=5, y=10)
 
-            self.btns[patient_select] = patientInfo
+            self.patientsButtons[patientButton] = id
 
             def button(event):
-                for btn in self.btns:
+                for btn in self.patientsButtons:
+                    if str(btn) in str(event.widget):
+                        return btn, self.patientsButtons[btn]
 
-                    if str(btn) == "." + ".".join(str(event.widget).split(".")[1:-1]):
-                        return btn, self.btns[btn]
-
-            patient_select.bind(
+            patientButton.bind(
                 "<Button-1>",
                 lambda event: [
                     self.select(button(event)[0]),
-                    SelectedPageFrame(self.master, button(event)[1]).place(
-                        x=399, y=0, width=879, height=681
+                    PatientInfos(self.master, button(event)[1]).place(
+                        x=400, y=0, width=879, height=681
                     ),
                 ],
             )
 
             CTkLabel(
-                patientcard,
-                text=f"Date de naissance: {patientInfo[3]} ",
+                patientCard,
+                text=f"Date de naissance: {dateOfBirth} ",
                 font=font(20),
                 text_color=Colors.White,
             ).place(x=21, y=59)
 
         CTkButton(
-            self.patientsframe,
+            self.patientsFrame,
             text="<",
             font=font(25),
             height=40,
             width=40,
-            fg_color=Colors.Mandarin if self.page else Colors.Silver,
+            fg_color=Colors.Mandarin if self.currentPage else Colors.Silver,
             corner_radius=20,
-            hover_color=Colors.Sepia if self.page else Colors.Silver,
-            command=lambda: self.update(-1 if self.page else 0),
+            hover_color=Colors.Sepia if self.currentPage else Colors.Silver,
+            command=lambda: self.update(-1 if self.currentPage else 0),
         ).place(x=104, y=522)
 
         CTkLabel(
-            self.patientsframe,
-            text=self.page + 1,
+            self.patientsFrame,
+            text=self.currentPage + 1,
             font=font(30),
             text_color=Colors.White,
         ).place(x=190, y=523)
 
         CTkButton(
-            self.patientsframe,
+            self.patientsFrame,
             text=">",
             font=font(25),
             height=40,
             width=40,
-            fg_color=Colors.Mandarin if self.page < len(pages) - 1 else Colors.Silver,
+            fg_color=Colors.Mandarin if self.currentPage < len(pages) - 1 else Colors.Silver,
             corner_radius=20,
-            hover_color=Colors.Sepia if self.page < len(pages) - 1 else Colors.Silver,
-            command=lambda: self.update(+1 if self.page < len(pages) - 1 else 0),
+            hover_color=Colors.Sepia if self.currentPage < len(pages) - 1 else Colors.Silver,
+            command=lambda: self.update(+1 if self.currentPage < len(pages) - 1 else 0),
         ).place(x=238, y=522)
+
+    def select(self, button):
+        for patientButton in self.patientsButtons:
+            patientButton.configure(fg_color=Colors.Coral, text_color=Colors.Mandarin, hover=True)
+        button.configure(fg_color=Colors.Mandarin, text_color=Colors.Cadet, hover=False)
+        self.SelectedPatient = self.patientsButtons[button]
 
     def update(self, num):
         if num:
-            self.page += num
+            self.currentPage += num
             self.load()
-        if self.button:
-            self.select(self.button)
+        if self.SelectedPatient:
+            for patientButton in self.patientsButtons:
+                if self.SelectedPatient == self.patientsButtons[patientButton]:
+                    self.select(patientButton)
 
 
-class SelectedPageFrame(CTkFrame):
-    def __init__(self, master: CTkFrame, patientInfo):
-        self.patientInfo = patientInfo
+class PatientInfos(CTkFrame):
+    def __init__(self, master: CTkFrame, patientId):
         super().__init__(master, corner_radius=0, fg_color=Colors.Coral)
+
         self.master = master
+        self.window = master.window
+        self.patientId = patientId
+
         self.view()
 
     def view(self):
 
+        id, firstName, lastName, dateOfBirth, gender, phoneNumber, keywords, maladiesChroniques = self.window.curr.execute("""SELECT * FROM patients WHERE id = ?""", (self.patientId,)).fetchone()
+
         CTkLabel(
             self,
-            text="Section patients",
+            text=f"Informations de patients",
             font=font(45),
             fg_color=Colors.Liver,
             corner_radius=20,
-            width=430,
+            width=570,
             height=75,
             text_color=Colors.White,
         ).pack(pady=15)
 
-        patientInfo = CTkFrame(
-            self, width=360, height=560, fg_color=Colors.Cadet, corner_radius=20
+        patientInfoCard = CTkFrame(
+            self, width=393, height=560, fg_color=Colors.Cadet, corner_radius=20
         )
-        patientInfo.place(x=23, y=106)
+        patientInfoCard.place(x=20, y=106)
 
-        info = lambda text, y: CTkLabel(
-            patientInfo, font=font(20), text=text, text_color=Colors.White
+        infoLabel = lambda text, y: CTkLabel(
+            patientInfoCard, font=font(20), text=text, text_color=Colors.White
         ).place(x=20, y=y)
-        not_specified = "Non spécifié"
 
-        info(f"Nom: {self.patientInfo[1]}", 30)
-        info(f"Prénom: {self.patientInfo[2]} ", 74)
-        info(f"Date de naissance: {self.patientInfo[3]}", 118)
-        info(f"Genre: {self.patientInfo[4]}", 162)
-        info(f"Age : {calculateAge(self.patientInfo[3])}", 206)
-        info(f"Poids recent: 80  ", 250)
-        info(f"Taille recente: 1m80", 294)
-        info(f"IMC recent: 24.9 ", 338)
-        info(
-            f"Numero de téléphone: {self.patientInfo[5] if self.patientInfo[5] else not_specified} ",
+        infoLabel(f"Nom: {lastName.capitalize()}", 30)
+        infoLabel(f"Prénom: {firstName.capitalize()} ", 74)
+        infoLabel(f"Date de naissance: {dateOfBirth}", 118)
+        infoLabel(f"Genre: {gender.capitalize()}", 162)
+        infoLabel(f"Age : {calculateAge(dateOfBirth)}", 206)
+        infoLabel(f"Poids recent: 80kg", 250)
+        infoLabel(f"Taille recente: 1m80", 294)
+        infoLabel(f"IMC recent: 24.9", 338)
+        infoLabel(
+            f"Numero de téléphone: {phoneNumber if phoneNumber else 'Non spécifié'} ",
             382,
         )
-        info(f"Derniere visite: 20/7/2021 ", 426)
-        info(
-            f"Mots clés: {self.patientInfo[6] if self.patientInfo[6] else not_specified} ",
+        infoLabel(f"Derniere visite: 20/7/2021 ", 426)
+        infoLabel(
+            f"Mots clés: {keywords if keywords else 'Non spécifié'} ",
             470,
         )
 
         CTkButton(
-            patientInfo,
+            patientInfoCard,
             text="Modifier",
             width=240,
             height=42,
@@ -392,7 +408,7 @@ class SelectedPageFrame(CTkFrame):
             hover_color=Colors.Sepia,
             font=font(20),
             text_color=Colors.White,
-        ).place(x=60, y=506)
+        ).place(relx=0.5, y=530, anchor=CENTER)
 
         CTkButton(
             self,
@@ -449,13 +465,16 @@ class SelectedPageFrame(CTkFrame):
 
 
 class PatientsPage(CTkFrame):
-    def __init__(self, master: CTk) -> None:
+    def __init__(self, master: CTkFrame) -> None:
+        clear(master)
         super().__init__(master, corner_radius=0, fg_color=Colors.Coral)
         self.pack(fill="both", expand=True)
 
         self.window = master.window
         self.master = master
-        
+
+        self.window = master.window
+
         self.view()
 
     def view(self):
