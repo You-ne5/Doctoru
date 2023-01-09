@@ -1,9 +1,10 @@
+from datetime import datetime
 from customtkinter import *
 from assets.code.ui import clear, Colors, font
 from src.app import navbar
 from PIL import Image
-from src.app.logic import calculateAge
-
+from src.app.logic import calculateAge, wait
+import asyncio
 
 class AddPatient(CTkFrame):
     def __init__(self, master: CTkFrame):
@@ -14,13 +15,13 @@ class AddPatient(CTkFrame):
     def view(self):
         title = CTkLabel(
             self,
-            text="Ajouter un patient", 
+            text="Ajouter un patient",
             font=font(45),
-            fg_color=Colors.Liver, 
+            fg_color=Colors.Liver,
             text_color=Colors.White,
             corner_radius=20,
-            height=75, 
-            width=430
+            height=75,
+            width=430,
         )
         title.pack(pady=15)
 
@@ -28,95 +29,145 @@ class AddPatient(CTkFrame):
         add_patient_card.place(x=21, y=120, width=839, height=496)
 
         self.firstName = CTkEntry(
-            add_patient_card, 
-            placeholder_text="Nom", 
-            justify=CENTER, 
-            font=font(23), 
-            placeholder_text_color=Colors.Silver, 
-            text_color=Colors.Cadet, 
+            add_patient_card,
+            placeholder_text="Nom",
+            justify=CENTER,
+            font=font(23),
+            placeholder_text_color=Colors.Silver,
+            text_color=Colors.Cadet,
             corner_radius=14,
-            fg_color=Colors.White
-            )
+            fg_color=Colors.White,
+        )
         self.firstName.place(x=50, y=34, width=300, height=46)
 
         self.lastName = CTkEntry(
-            add_patient_card, 
-            placeholder_text="Prénom", 
-            justify=CENTER, 
-            font=font(23), 
-            placeholder_text_color=Colors.Silver, 
-            text_color=Colors.Cadet, 
+            add_patient_card,
+            placeholder_text="Prénom",
+            justify=CENTER,
+            font=font(23),
+            placeholder_text_color=Colors.Silver,
+            text_color=Colors.Cadet,
             corner_radius=14,
-            fg_color=Colors.White
-            )
+            fg_color=Colors.White,
+        )
         self.lastName.place(x=50, y=129, width=300, height=46)
 
         self.dateOfBirth = CTkEntry(
-            add_patient_card, 
-            placeholder_text="Date de naissance", 
-            justify=CENTER, 
-            font=font(23), 
-            placeholder_text_color=Colors.Silver, 
-            text_color=Colors.Cadet, 
+            add_patient_card,
+            placeholder_text="Date de naissance",
+            justify=CENTER,
+            font=font(23),
+            placeholder_text_color=Colors.Silver,
+            text_color=Colors.Cadet,
             corner_radius=14,
-            fg_color=Colors.White
-            )
-        self.dateOfBirth.place(x=50, y=220,width=300, height=46)
+            fg_color=Colors.White,
+        )
+        self.dateOfBirth.place(x=50, y=220, width=300, height=46)
 
-    
-        
-        self.Genre = CTkEntry(
-            add_patient_card, 
-            placeholder_text="Genre", 
-            justify=CENTER, 
-            font=font(23), 
-            placeholder_text_color=Colors.Silver, 
-            text_color=Colors.Cadet, 
+
+        self.Genre = CTkComboBox(
+            add_patient_card,
+            values= ["Genre", "Garçon", "Fille"],
+            font=font(20),
+            justify=CENTER,
+            text_color=Colors.Cadet,
+            dropdown_fg_color=Colors.Liver,
             corner_radius=14,
-            fg_color=Colors.White
-            )
-        self.Genre.place(x=51, y=313,width=300, height=46)
+            fg_color=Colors.White,
+            width=300,
+            height=46,
+            dropdown_font=font(20)
+        )
+        self.Genre.place(x=51, y=313)
 
 
         self.maladie_chronique = CTkEntry(
-            add_patient_card, 
-            placeholder_text="Maladies Chroniques", 
-            justify=CENTER, 
-            font=font(23), 
-            placeholder_text_color=Colors.Silver, 
-            text_color=Colors.Cadet, 
+            add_patient_card,
+            placeholder_text="Maladies Chroniques",
+            justify=CENTER,
+            font=font(23),
+            placeholder_text_color=Colors.Silver,
+            text_color=Colors.Cadet,
             corner_radius=14,
-            fg_color=Colors.White
-            )
-        self.maladie_chronique.place(x=480, y=34,width=300, height=46)
+            fg_color=Colors.White,
+        )
+        self.maladie_chronique.place(x=480, y=34, width=300, height=46)
 
         self.phoneNumber = CTkEntry(
-            add_patient_card, 
-            placeholder_text="Téléphone (optionnel)", 
-            justify=CENTER, 
-            font=font(23), 
-            placeholder_text_color=Colors.Silver, 
-            text_color=Colors.Cadet, 
+            add_patient_card,
+            placeholder_text="Téléphone (optionnel)",
+            justify=CENTER,
+            font=font(23),
+            placeholder_text_color=Colors.Silver,
+            text_color=Colors.Cadet,
             corner_radius=14,
-            fg_color=Colors.White
-            )
-        self.phoneNumber.place(x=480, y=126,width=300, height=46)
+            fg_color=Colors.White,
+        )
+        self.phoneNumber.place(x=480, y=126, width=300, height=46)
 
         self.keywords = CTkEntry(
-            add_patient_card, 
-            placeholder_text="Mots clés(optionel)", 
-            justify=CENTER, 
-            font=font(23), 
-            placeholder_text_color=Colors.Silver, 
-            text_color=Colors.Cadet, 
+            add_patient_card,
+            placeholder_text="Mots clés(optionel)",
+            justify=CENTER,
+            font=font(23),
+            placeholder_text_color=Colors.Silver,
+            text_color=Colors.Cadet,
             corner_radius=14,
-            fg_color=Colors.White
+            fg_color=Colors.White,
+        )
+        self.keywords.place(x=480, y=223, width=300, height=46)
+
+        CTkButton(
+            add_patient_card,
+            fg_color=Colors.Mandarin,
+            corner_radius=18,
+            text="Ajouter",
+            font=font(25),
+            hover_color=Colors.Sepia,
+            command=lambda: self.logic(),
+        ).place(width=255, height=67, x=290, y=400)
+
+
+    def logic(self):
+        def dateofBirthcheck(Bday):
+            try:
+                return datetime.strptime(Bday, "%d/%m/%Y")
+            except:
+                return None
+
+        firstName = self.firstName.get()
+        lastName = self.lastName.get()
+        dateOfBirth = dateofBirthcheck(self.dateOfBirth.get())
+        genre = self.Genre.get() if self.Genre.get() in ["Fille", "Garçon"] else None
+        maladieChronique = (self.maladie_chronique.get() if self.maladie_chronique.get() else None)
+        phoneNumber = self.phoneNumber.get() if self.phoneNumber.get() else None
+        keywords = self.keywords.get() if self.keywords.get() else None
+
+        if firstName and lastName and dateOfBirth and genre:
+            self.master.window.curr.execute(
+                """INSERT INTO "patients" (firstName, lastName, dateOfBirth, gender, phoneNumber, keywords, maladieChronique) VALUES (?,?,?,?,?,?,?)"""
+                "",
+                (
+                    firstName,
+                    lastName,
+                    dateOfBirth,
+                    genre,
+                    phoneNumber,
+                    keywords,
+                    maladieChronique,
+                ),
             )
-        self.keywords.place(x=480, y=223,width=300, height=46)
+            self.master.window.conn.commit()
+
+            self.successframe = CTkLabel(self, text="Patient Ajouté avec succes", font=font(25), fg_color=Colors.Success, text_color=Colors.White)
+            self.successframe.place(x=0, y=640, width=880, height=45)
+
+        else:
+            self.errorframe = CTkLabel(self, text="Veuillez entrer toute les informations requise correctement", font=font(25), fg_color=Colors.Danger, text_color=Colors.White)
+            self.errorframe.place(x=0, y=640, width=880, height=45)
 
 
-        CTkButton(add_patient_card, fg_color=Colors.Mandarin, corner_radius=18, text="Ajouter", font=font(25), hover_color=Colors.Sepia, command=lambda: None).place(width=255, height=67, x=290, y=400)
-
+            
 
 
 class PatientsList(CTkFrame):
@@ -149,7 +200,9 @@ class PatientsList(CTkFrame):
                 light_image=Image.open("assets/imgs/add patient icon.png"),
                 size=(50, 50),
             ),
-            command=lambda: AddPatient(self.master).place(x=400, y=0, width=880, height=680)
+            command=lambda: AddPatient(self.master).place(
+                x=400, y=0, width=880, height=680
+            ),
         ).place(x=326)
 
         searchPatient = CTkEntry(
@@ -400,10 +453,11 @@ class PatientsPage(CTkFrame):
         super().__init__(master, corner_radius=0, fg_color=Colors.Coral)
         self.pack(fill="both", expand=True)
 
+        self.window = master.window
         self.master = master
-
+        
         self.view()
 
     def view(self):
         PatientsList(self).place(x=0, y=0, width=400, height=682)
-        AddPatient(self).place(x=400, y=0, width=880, height=680)
+        AddPatient(self).place(x=400, y=0, width=880, height=682)
