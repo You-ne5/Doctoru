@@ -319,6 +319,7 @@ class Page(CTkFrame):
 
 class HomePage(CTkFrame):
     def __init__(self, master: CTkFrame) -> None:
+        clear(master)
         super().__init__(master, corner_radius=0, fg_color=Colors.Coral)
         
         self.window = master.window

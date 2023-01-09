@@ -24,7 +24,12 @@ class App(CTk):
             with open("config.json", "r") as f:
                 config = json.load(f)
                 if config and config["userId"]:
-                    self.userId = config["userId"]
+                    username = self.curr.execute("""SELECT username FROM users WHERE id = ?""", (config["userId"],)).fetchone()
+                    
+                    if username:
+                        self.userId = config["userId"]
+                    else:
+                        raise
                     page.Page(self)
                 else:
                     raise
@@ -53,7 +58,7 @@ class App(CTk):
                 "gender" TEXT NOT NULL,
                 "phoneNumber" TEXT,
                 "keywords" TEXT,
-                "maladieChronique" TEXT,
+                "maladiesChroniques" TEXT,
 				PRIMARY KEY ("id" AUTOINCREMENT)
 				)"""
         )

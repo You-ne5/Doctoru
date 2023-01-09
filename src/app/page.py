@@ -1,9 +1,11 @@
 from customtkinter import *
 from assets.code.ui import Colors
 from src.app import navbar, infobar
+from assets.code.ui import clear
 
 class Page(CTkFrame):
     def __init__(self, window: CTk):
+        clear(window)
         super().__init__(window, fg_color=Colors.Coral)
         self.pack(fill="both", expand=True)
 
