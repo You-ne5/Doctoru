@@ -244,7 +244,7 @@ class PatientsList(CTkFrame):
                 pages.append([])
             
             if search: 
-                if search in firstName.lower() or search in lastName.lower() or search in dateOfBirth:   
+                if search in " ".join([firstName.lower(), lastName.lower()]) or search in dateOfBirth:   
                     pages[-1].append((id, firstName, lastName, dateOfBirth))
             else:
                 pages[-1].append((id, firstName, lastName, dateOfBirth))
