@@ -176,7 +176,7 @@ class AddPatient(CTkFrame):
         self.keywords = self.keywordsEntry.get() if self.keywordsEntry.get() else None
 
         if self.firstName and self.lastName and self.dateOfBirth!="problem" and self.dateOfBirth and self.genre:
-            self.window.curr.execute("""SELECT id FROM patients WHERE firstName=? AND lastName=? AND dateOfBirth=? AND gender=?""", (self.firstName, self.lastName, self.dateOfBirth.strftime("%d/%m/%Y"), self.genre,))
+            self.window.curr.execute("""SELECT id FROM patients WHERE firstName=? AND lastName=?""", (self.firstName, self.lastName,))
             id = self.window.curr.fetchone()
             if id:
                 self.verification(" ".join([self.firstName, self.lastName]), id[0])
@@ -217,12 +217,21 @@ class AddPatient(CTkFrame):
 
         pateintid = self.window.curr.execute("""SELECT id FROM patients""").fetchall()[-1][0]
 
+        self.firstNameEntry.delete(0, END)
+        self.lastNameEntry.delete(0, END)
+        self.dateOfBirthEntry.delete(0, END)
+        self.phoneNumberEntry.delete(0, END)
+        self.keywordsEntry.delete(0, END)
+        self.maladiesChroniquesEntry.delete(0, END)
+
         self.AlertLabel = CTkLabel(self, text="Patient ajouté avec succes!", font=font(20), fg_color=Colors.Success, text_color=Colors.White, height=45)
         self.AlertLabel.place(x=0,y=637, relwidth=1)
+
 
         CTkButton(self.AlertLabel, fg_color=Colors.Success, corner_radius=10, text="Acceder" , font=font(20), hover_color="#0F5132",
         command=lambda: PatientInfos(self.master, int(pateintid)).place(x=400, y=0, width=879, height=681)
         ).place(width=100, height=35, x=770, y=5)
+
 
 
 class PatientsList(CTkFrame):
@@ -416,7 +425,7 @@ class PatientInfos(CTkFrame):
 
     def view(self):
 
-        id, firstName, lastName, dateOfBirth, gender, phoneNumber, keywords, maladiesChroniques = self.window.curr.execute("""SELECT * FROM patients WHERE id = ?""", (self.patientId,)).fetchone()
+        id, self.firstName, self.lastName, dateOfBirth, gender, phoneNumber, keywords, maladiesChroniques = self.window.curr.execute("""SELECT * FROM patients WHERE id = ?""", (self.patientId,)).fetchone()
 
         CTkLabel(
             self,
@@ -438,8 +447,8 @@ class PatientInfos(CTkFrame):
             patientInfoCard, font=font(20), text=text, text_color=Colors.White
         ).place(x=20, y=y)
 
-        infoLabel(f"Nom: {lastName.capitalize()}", 30)
-        infoLabel(f"Prénom: {firstName.capitalize()} ", 74)
+        infoLabel(f"Nom: {self.lastName.capitalize()}", 30)
+        infoLabel(f"Prénom: {self.firstName.capitalize()} ", 74)
         infoLabel(f"Date de naissance: {dateOfBirth}", 118)
         infoLabel(f"Genre: {gender.capitalize()}", 162)
         infoLabel(f"Age : {calculateAge(dateOfBirth)}", 206)
@@ -483,14 +492,25 @@ class PatientInfos(CTkFrame):
         CTkButton(
             self,
             text="Ajouter une visite",
-            font=font(26),
+            font=font(20),
             fg_color=Colors.Mandarin,
-            width=380,
-            height=72,
             corner_radius=20,
             hover_color=Colors.Sepia,
             text_color=Colors.White,
-        ).place(x=433, y=585)
+        ).place(x=650, y=585, height=72, width=200)
+
+        CTkButton(
+            self,
+            text="Supprimer ce patient",
+            font=font(16),
+            fg_color=Colors.Danger,
+            corner_radius=20,
+            hover_color="#8b0000",
+            text_color=Colors.White,
+            command=lambda: self.deletepatient()
+            ).place(x=430, y=585, height=72, width=200)
+
+
 
         courbeDeCroissance = CTkFrame(
             self, width=375, height=370, corner_radius=20, fg_color=Colors.Cadet
@@ -520,6 +540,31 @@ class PatientInfos(CTkFrame):
         )
 
         CTkLabel(courbeDeCroissance, image=img).place(x=0, y=43)
+
+    def deletepatient(self):
+
+        
+        self.toplevel = CTkToplevel(fg_color=Colors.Coral)
+        self.toplevel.resizable(False, False)
+        center(574, 245, self.toplevel)
+
+        def close():
+            self.toplevel.destroy()
+
+        def delete():
+            self.window.curr.execute("""DELETE FROM patients WHERE id=?""", (self.patientId,))
+            close()
+            AddPatient(self.master).place(x=400, y=0, width=880, height=682)
+            PatientsList(self.master).place(x=0, y=0, width=400, height=682)
+
+        CTkLabel(self.toplevel, text="Supprimer le patient", fg_color=Colors.Liver, font=font(25), text_color=Colors.White).place(x=124, y=34, width=320, height=70)
+        CTkLabel(self.toplevel, text=f"étes vous sure de vouloir supprimer le patient {self.firstName} {self.lastName} ?", font=font(18), text_color=Colors.White).place(x=40, y=136)
+        CTkButton(self.toplevel, text="Continuer", fg_color=Colors.Mandarin, text_color=Colors.White, hover_color=Colors.Danger, command=delete).place(x=308, y=178, width=130, height=50)
+        CTkButton(self.toplevel, text="Annuler", fg_color=Colors.Silver, text_color=Colors.White, hover_color=Colors.Danger, command=close).place(x=140, y=178, width=130, height=50)
+
+        
+
+        
 
 
 class PatientsPage(CTkFrame):

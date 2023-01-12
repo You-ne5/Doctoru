@@ -80,6 +80,7 @@ class App(CTk):
             "weight" REAL NOT NULL,
             "conclusion" TEXT NOT NULL,
             "montant" REAL NOT NULL,
+            "DEP" INTEGER,
             PRIMARY KEY ("id" AUTOINCREMENT)
         )""")
 
