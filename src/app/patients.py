@@ -1,8 +1,35 @@
 from datetime import datetime
 from customtkinter import *
-from assets.code.ui import clear, Colors, font
+from assets.code.ui import clear, Colors, font, center
 from PIL import Image
 from assets.code.logic import calculateAge, strToDatetime
+
+
+class confirm(CTkToplevel):
+    def __init__(self, patientname, patientid, master):
+        super().__init__(fg_color=Colors.Cadet)
+        self.master = master
+        self.patientname = patientname
+        self.patientid = patientid
+        self.title("Confirmation de patient") 
+        self.resizable(False, False)
+
+        center(477, 200, self)
+
+        self.view()
+
+    def close(self):
+            self.destroy()
+            self.master.verif = None 
+
+    def view(self):
+        CTkLabel(self, text="Ce Patient existe deja!", fg_color=Colors.Liver, text_color=Colors.White, corner_radius=10, font=font(28)).place(x=64, y=20, height=45, width=350)
+        CTkLabel(self, text=f"""Le pateint {self.patientname} existe deja!""", font=font(16), text_color=Colors.White).place(x=125,y=75)
+        CTkLabel(self, text=f"""voulez vous continuer quand-meme?""", font=font(16), text_color=Colors.White).place(x=93,y=95)
+        CTkButton(self, text="Continuer", font=font(18), fg_color=Colors.Danger, corner_radius=18, hover_color=Colors.Warning, command=lambda: [self.master.addpatient(), self.close()]).place(x=340, y= 135, height=50, width=120)
+        CTkButton(self, text="Acceder au patient", font=font(12), fg_color=Colors.Mandarin, corner_radius=16, hover_color=Colors.Sepia, command= lambda : [self.close(), PatientsList(self.master.master).patientinfos(self.patientid)]).place(x=170, y= 135, height=50, width=154)
+        CTkButton(self, text="Annuler", font=font(18), fg_color=Colors.Silver, corner_radius=18, hover_color=Colors.Warning, command=self.close).place(x=15, y= 135, height=50, width=100)
+
 
 class AddPatient(CTkFrame):
     def __init__(self, master: CTkFrame):
@@ -10,6 +37,7 @@ class AddPatient(CTkFrame):
 
         self.master = master
         self.window = master.window
+        self.verif=None
         self.view()
 
     def view(self):
@@ -129,47 +157,72 @@ class AddPatient(CTkFrame):
 
 
     def logic(self):
+        
         def dateofBirthcheck(Bday):
             try:
-                return datetime.strptime(Bday, "%d/%m/%Y")
+                if Bday:
+                    return datetime.strptime(Bday, "%d/%m/%Y")
+                else:
+                    return None
             except:
-                return None
+                return "problem"
 
-        firstName = self.firstNameEntry.get()
-        lastName = self.lastNameEntry.get()
-        dateOfBirth = dateofBirthcheck(self.dateOfBirthEntry.get())
-        genre = self.GenderEntry.get() if self.GenderEntry.get() in ["Fille", "Garçon"] else None
-        maladiesChroniques = (self.maladiesChroniquesEntry.get() if self.maladiesChroniquesEntry.get() else None)
-        phoneNumber = self.phoneNumberEntry.get() if self.phoneNumberEntry.get() else None
-        keywords = self.keywordsEntry.get() if self.keywordsEntry.get() else None
+        self.firstName = self.firstNameEntry.get()
+        self.lastName = self.lastNameEntry.get()
+        self.dateOfBirth = dateofBirthcheck(self.dateOfBirthEntry.get())
+        self.genre = self.GenderEntry.get() if self.GenderEntry.get() in ["Fille", "Garçon"] else None
+        self.maladiesChroniques = (self.maladiesChroniquesEntry.get() if self.maladiesChroniquesEntry.get() else None)
+        self.phoneNumber = self.phoneNumberEntry.get() if self.phoneNumberEntry.get() else None
+        self.keywords = self.keywordsEntry.get() if self.keywordsEntry.get() else None
 
-        try:
-            self.AlertLabel.destroy()
-        except:
-            pass
-
-        if firstName and lastName and dateOfBirth and genre:
-            self.window.curr.execute(
-                """INSERT INTO "patients" (firstName, lastName, dateOfBirth, gender, phoneNumber, keywords, maladiesChroniques) VALUES (?,?,?,?,?,?,?)"""
-                "",
-                (
-                    firstName,
-                    lastName,
-                    dateOfBirth.strftime("%d/%m/%Y"),
-                    genre,
-                    phoneNumber,
-                    keywords,
-                    maladiesChroniques,
-                ),
-            )
-            self.window.conn.commit()
-
-            self.AlertLabel = CTkLabel(self, text="Patient ajouté avec succes", font=font(25), fg_color=Colors.Success, text_color=Colors.White, height=45)
-            self.AlertLabel.place(x=0,y=637)
-
+        if self.firstName and self.lastName and self.dateOfBirth!="problem" and self.dateOfBirth and self.genre:
+            self.window.curr.execute("""SELECT id FROM patients WHERE firstName=? AND lastName=? AND dateOfBirth=? AND gender=?""", (self.firstName, self.lastName, self.dateOfBirth.strftime("%d/%m/%Y"), self.genre,))
+            id = self.window.curr.fetchone()
+            if id:
+                self.verification(" ".join([self.firstName, self.lastName]), id[0])
+            else:
+                self.addpatient()
         else:
-            self.AlertLabel = CTkLabel(self, text="Veuillez entrer toute les informations requise correctement", font=font(25), fg_color=Colors.Danger, text_color=Colors.White, height=45)
+            self.AlertLabel = CTkLabel(self, text="Veuillez entrer toute les informations requise correctement" if self.dateOfBirth!="problem" else "Veuillez entrer la dade dans le bon format ex: 15/11/2006", font=font(20), fg_color=Colors.Danger, text_color=Colors.White, height=45)
             self.AlertLabel.place(x=0,y=637, relwidth=1)
+
+
+    def verification(self, patientname, patientid):
+        
+        if self.verif:
+            self.verif.focus()
+        else:
+            self.verif = confirm(patientname, patientid, self)
+            self.verif.protocol("WM_DELETE_WINDOW", self.verif.close)
+        
+
+
+    def addpatient(self):
+        
+        self.window.curr.execute(
+            """INSERT INTO "patients" (firstName, lastName, dateOfBirth, gender, phoneNumber, keywords, maladieChronique) VALUES (?,?,?,?,?,?,?)"""
+            "",
+            (
+                self.firstName,
+                self.lastName,
+                self.dateOfBirth.strftime("%d/%m/%Y"),
+                self.genre,
+                self.phoneNumber,
+                self.keywords,
+                self.maladiesChroniques,
+            ),
+        )  
+        
+        self.window.conn.commit()
+
+        pateintid = self.window.curr.execute("""SELECT id FROM patients""").fetchall()[-1][0]
+
+        self.AlertLabel = CTkLabel(self, text="Patient ajouté avec succes!", font=font(20), fg_color=Colors.Success, text_color=Colors.White, height=45)
+        self.AlertLabel.place(x=0,y=637, relwidth=1)
+
+        CTkButton(self.AlertLabel, fg_color=Colors.Success, corner_radius=10, text="Acceder" , font=font(20), hover_color="#0F5132",
+        command=lambda: PatientInfos(self.master, int(pateintid)).place(x=400, y=0, width=879, height=681)
+        ).place(width=100, height=35, x=770, y=5)
 
 
 class PatientsList(CTkFrame):
@@ -227,6 +280,13 @@ class PatientsList(CTkFrame):
             widget.bind("<Button-1>", lambda _: self.focus())
 
         self.searchPatient.bind("<Key>", lambda _: self.load())
+        self.searchPatient.bind("<Return>", lambda _: self.load())
+
+
+    def patientinfos(self, patientid):
+        PatientInfos(self.master, patientid).place(
+                        x=400, y=0, width=879, height=681
+                    ),
 
     def load(self):
         clear(self.patientsFrame)
@@ -286,9 +346,7 @@ class PatientsList(CTkFrame):
                 "<Button-1>",
                 lambda event: [
                     self.select(button(event)[0]),
-                    PatientInfos(self.master, button(event)[1]).place(
-                        x=400, y=0, width=879, height=681
-                    ),
+                    self.patientinfos(button(event)[1])
                 ],
             )
 

@@ -59,6 +59,7 @@ class App(CTk):
                 "phoneNumber" TEXT,
                 "keywords" TEXT,
                 "maladiesChroniques" TEXT,
+                "dateDeCréation" TEXT,
 				PRIMARY KEY ("id" AUTOINCREMENT)
 				)"""
         )

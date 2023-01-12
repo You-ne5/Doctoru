@@ -4,14 +4,13 @@ from assets.code.logic import strToDatetime
 from src.app import navbar, infobar
 from PIL import Image
 from datetime import datetime
-
-
+from src.app.patients import PatientsPage
+from src.app.visits import VisitsPage
 class Meeting(CTkFrame):
     def __init__(self, master: CTkFrame, patientId: int, dt: datetime):
         super().__init__(
             master, width=350, height=100, corner_radius=20, fg_color=Colors.Coral
         )
-
         self.patientId = patientId
         self.dt = dt
 
@@ -30,7 +29,7 @@ class Meeting(CTkFrame):
 class DailyMeetings(CTkFrame):
     def __init__(self, master: CTkFrame):
         super().__init__(master, corner_radius=0, fg_color=Colors.Cadet)
-
+        self.master = master
         self.window = master.window
         self.page = 0
 
@@ -126,8 +125,9 @@ class DailyMeetings(CTkFrame):
 class ActionBar(CTkFrame):
     def __init__(self, master: CTkFrame):
         super().__init__(master, corner_radius=0, fg_color=Colors.Cadet)
+        self.master = master
         self.view()
-
+        
     def view(self):
         addPatientButton = CTkButton(
             self,
@@ -141,6 +141,7 @@ class ActionBar(CTkFrame):
                 light_image=Image.open("assets/imgs/add patient icon.png"),
                 size=(50, 50),
             ),
+            command=lambda: self.master.master.navBar.patientsButton.invoke()
         )
         addPatientButton.place(x=270, y=10)
         CTkLabel(
@@ -175,6 +176,7 @@ class ActionBar(CTkFrame):
             image=CTkImage(
                 light_image=Image.open("assets/imgs/add visit icon.png"), size=(50, 50)
             ),
+            command=lambda: VisitsPage(self.master.master).place(x=0, y=150, width=1280, height=682)
         )
         addVisitButton.place(x=546, y=10)
         CTkLabel(
