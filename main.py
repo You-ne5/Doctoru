@@ -88,6 +88,8 @@ class App(CTk):
             "id" INTEGER NOT NULL UNIQUE, 
             "patientFirstName" TEXT NOT NULL,
             "patientLastName" TEXT NOT NULL,
+            "datetime" TIMESTAMP NOT NULL,
+            "seen" INTEGER NOT NULL,
             PRIMARY KEY ("id" AUTOINCREMENT)
         )""")
 

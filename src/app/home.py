@@ -1,11 +1,16 @@
 from customtkinter import *
 from assets.code.ui import clear, Colors, font
 from assets.code.logic import strToDatetime
-from src.app import navbar, infobar
 from PIL import Image
 from datetime import datetime
-from src.app.patients import PatientsPage
 from src.app.visits import VisitsPage
+
+class AddMeeting(CTkToplevel):
+    def __init__(self, window):
+        super().__init__(window, fg_color=Colors.Cadet)
+        self.title("Ajouter un rendez-vous")
+        self.geometry("500x500")
+
 class Meeting(CTkFrame):
     def __init__(self, master: CTkFrame, patientId: int, dt: datetime):
         super().__init__(
@@ -66,6 +71,10 @@ class DailyMeetings(CTkFrame):
         meetings = self.window.curr.execute(
             """SELECT patientId, datetime FROM "meetings" """
         ).fetchall()
+
+        if not meetings:
+            CTkLabel(self, text="Aucun rendez-vous", text_color=Colors.White, font=font(24)).place(relx=0.5, rely=0.5, anchor=CENTER)
+            return
 
         pages = []
 
@@ -187,6 +196,11 @@ class ActionBar(CTkFrame):
 class PatientsQueue(CTkFrame):
     def __init__(self, master: CTkFrame):
         super().__init__(master, corner_radius=10, fg_color=Colors.Cadet)
+
+        self.window = master.window
+
+        self.master = master
+
         self.view()
 
     def view(self):
@@ -201,44 +215,54 @@ class PatientsQueue(CTkFrame):
             bg_color=Colors.Coral,
         ).pack(fill="x")
 
-        CTkFrame(self, height=10, fg_color=Colors.Cadet).place(x=0, y=35, relwidth=1)
+        CTkFrame(self, height=5, fg_color=Colors.Cadet).place(x=0, y=35, relwidth=1)
 
-        CTkLabel(
-            self,
-            text="Mr. Hamid",
-            width=250,
-            height=35,
-            font=font(20),
-            corner_radius=10,
-            text_color=Colors.Mandarin,
-            fg_color=Colors.Coral,
-        ).pack(pady=20)
+        self.waitingPatientsFrame = CTkFrame(self, fg_color=Colors.Cadet)
+        self.waitingPatientsFrame.place(x=0, y=35, relwidth=1, height=302)
 
-        CTkButton(
-            self,
-            text="Suivant",
-            text_color=Colors.White,
-            width=150,
-            height=35,
-            font=font(24),
-            fg_color=Colors.Mandarin,
-        ).pack(side="bottom", pady=15)
+        CTkButton(self, fg_color=Colors.Mandarin, hover_color=Colors.Sepia, text="Suivant", width=150, height=30, font=font(24), command=self.next).pack(side="bottom", pady=14)
 
-        CTkLabel(
-            self,
-            text="Mr. Hamid",
-            width=250,
-            height=35,
-            font=font(20),
-            corner_radius=10,
-            text_color=Colors.Mandarin,
-            fg_color=Colors.Coral,
-        ).pack(pady=20)
+        self.load()
+
+
+    def load(self):
+        clear(self.waitingPatientsFrame)
+        patientsWaiting = self.window.curr.execute(""" SELECT patientFirstName, patientLastName, datetime FROM waiting WHERE seen = ?""", (0,)).fetchall()
+        patientsWaiting = [patient for patient in patientsWaiting if patient[2].startswith(str(datetime.now().strftime("%d/%m/%Y")))]
+
+        if patientsWaiting:
+            CTkLabel(self.waitingPatientsFrame, text=" ".join(patientsWaiting[0][0:2]), width=250, height=35, fg_color=Colors.Coral, text_color=Colors.Mandarin, font=font(20), corner_radius=10).pack(pady=20)
+
+            CTkFrame(self.waitingPatientsFrame, fg_color=Colors.Mandarin, height=2).pack(fill="x")
+
+            waitingRoom = CTkFrame(self.waitingPatientsFrame, fg_color=Colors.Cadet)
+            waitingRoom.pack(fill="x")
+
+            for waitingPatient in patientsWaiting[1:6]:
+                CTkLabel(waitingRoom, text=" ".join(waitingPatient[0:2]), width=215, height=35, fg_color=Colors.Coral, text_color=Colors.White, font=font(16), corner_radius=10).pack(pady=5)
+
+
+        else:
+            CTkLabel(self.waitingPatientsFrame, text="Aucun\npatient en attente", font=font(24), text_color=Colors.White).place(relx=0.5, rely=0.5, anchor=CENTER)
+
+    def next(self):
+        patientsWaiting = self.window.curr.execute(""" SELECT id, datetime FROM waiting WHERE seen = ?""", (0,)).fetchall()
+        patientsWaiting = [patient for patient in patientsWaiting if patient[1].startswith(str(datetime.now().strftime("%d/%m/%Y")))]
+        
+        self.window.curr.execute("""UPDATE waiting SET seen = ? WHERE id = ?""", (1, patientsWaiting[0][0]))
+        self.window.conn.commit()
+
+        self.load()
 
 
 class DailyVisits(CTkFrame):
     def __init__(self, master: CTkFrame):
         super().__init__(master, corner_radius=10, fg_color=Colors.Cadet)
+
+        self.window = master.window
+
+        self.master = master
+
         self.view()
 
     def view(self):
@@ -255,9 +279,12 @@ class DailyVisits(CTkFrame):
 
         CTkFrame(self, height=10, fg_color=Colors.Cadet).place(x=0, y=35, relwidth=1)
 
+        visits = self.window.curr.execute("""SELECT datetime FROM visits""").fetchall()
+        dailyVisits = [visit for visit in visits if visit[0].startswith(str(datetime.now().strftime("%d/%m/%Y")))]
+
         CTkLabel(
             self,
-            text="2 Patients",
+            text=f"{len(dailyVisits)} Patient{'s' if len(dailyVisits) > 1 else ''}",
             font=font(40),
             text_color=Colors.White,
             fg_color=Colors.Cadet,
@@ -267,6 +294,11 @@ class DailyVisits(CTkFrame):
 class DailyCash(CTkFrame):
     def __init__(self, master: CTkFrame):
         super().__init__(master, corner_radius=10, fg_color=Colors.Cadet)
+
+        self.window = master.window
+
+        self.master = master
+
         self.view()
 
     def view(self):
@@ -283,9 +315,13 @@ class DailyCash(CTkFrame):
 
         CTkFrame(self, height=10, fg_color=Colors.Cadet).place(x=0, y=35, relwidth=1)
 
+        visits = self.window.curr.execute("""SELECT datetime, montant FROM visits""").fetchall()
+        dailyVisits = [visit for visit in visits if visit[0].startswith(str(datetime.now().strftime("%d/%m/%Y")))]
+        dailyCash = sum([montant for dt, montant in dailyVisits])
+
         CTkLabel(
             self,
-            text="1000$",
+            text=f"{int(dailyCash)} DA",
             font=font(40),
             text_color=Colors.White,
             fg_color=Colors.Cadet,
@@ -295,6 +331,11 @@ class DailyCash(CTkFrame):
 class Page(CTkFrame):
     def __init__(self, master: CTkFrame):
         super().__init__(master, corner_radius=0, fg_color=Colors.Coral)
+
+        self.window = master.window
+
+        self.master = master
+        
         self.view()
 
     def view(self):
