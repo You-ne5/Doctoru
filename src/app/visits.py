@@ -2,7 +2,7 @@ from datetime import datetime
 from customtkinter import *
 from assets.code.ui import clear, Colors, font
 from PIL import Image
-
+from src.app import patients
 
 class VisitBox(CTkFrame):
     def __init__(self, master: CTkFrame):
@@ -111,7 +111,8 @@ class VisitBox(CTkFrame):
             text_color=Colors.White,
             corner_radius=15,
             font=font(20),
-            hover_color=Colors.Sepia
+            hover_color=Colors.Sepia,
+            command = lambda:[patients.PatientsPage(self.master.master.master)]
         ).place(x=465, y=130)
 
         CTkButton(
@@ -222,10 +223,6 @@ class VisitBox(CTkFrame):
                 self.suggestions.destroy()
                 self.suggestions = None
         
-
-
-
-
 class VisitsPage(CTkFrame):
     def __init__(self, master: CTkFrame) -> None:
         clear(master)

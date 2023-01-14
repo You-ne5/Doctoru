@@ -5,6 +5,7 @@ from math import floor
 def calculateAge(Bday):
     bday = datetime.strptime(Bday, "%d/%m/%Y")
     age = (datetime.now() - bday).days/365.25
+    
 
     suffix = f"{'ans' if age >= 2 else 'mois'}"
 

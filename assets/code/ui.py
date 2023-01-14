@@ -14,6 +14,7 @@ class Colors:
     Success = "#198754"
     Warning = "#EED202"
     Danger = "#FF002D"
+    Danger_hover = "#B3001F"
 
 
 def font(size: int) -> CTkFont:

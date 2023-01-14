@@ -170,6 +170,7 @@ class AddPatient(CTkFrame):
         self.firstName = self.firstNameEntry.get()
         self.lastName = self.lastNameEntry.get()
         self.dateOfBirth = dateofBirthcheck(self.dateOfBirthEntry.get())
+        print(self.dateOfBirth)
         self.genre = self.GenderEntry.get() if self.GenderEntry.get() in ["Fille", "Garçon"] else None
         self.maladiesChroniques = (self.maladiesChroniquesEntry.get() if self.maladiesChroniquesEntry.get() else None)
         self.phoneNumber = self.phoneNumberEntry.get() if self.phoneNumberEntry.get() else None
@@ -420,12 +421,17 @@ class PatientInfos(CTkFrame):
         self.master = master
         self.window = master.window
         self.patientId = patientId
+        self.editpatient = None
 
         self.view()
 
+
     def view(self):
 
-        id, self.firstName, self.lastName, dateOfBirth, gender, phoneNumber, keywords, maladiesChroniques = self.window.curr.execute("""SELECT * FROM patients WHERE id = ?""", (self.patientId,)).fetchone()
+        id, self.firstName, self.lastName, self.dateOfBirth, self.gender, self.phoneNumber, self.keywords, self.maladiesChroniques = self.window.curr.execute("""SELECT * FROM patients WHERE id = ?""", (self.patientId,)).fetchone()
+
+        if not self.keywords:
+            self.keywords=None
 
         CTkLabel(
             self,
@@ -438,35 +444,35 @@ class PatientInfos(CTkFrame):
             text_color=Colors.White,
         ).pack(pady=15)
 
-        patientInfoCard = CTkFrame(
+        self.patientInfoCard = CTkFrame(
             self, width=393, height=560, fg_color=Colors.Cadet, corner_radius=20
         )
-        patientInfoCard.place(x=20, y=106)
+        self.patientInfoCard.place(x=20, y=106)
 
         infoLabel = lambda text, y: CTkLabel(
-            patientInfoCard, font=font(20), text=text, text_color=Colors.White
+            self.patientInfoCard, font=font(20), text=text, text_color=Colors.White
         ).place(x=20, y=y)
 
         infoLabel(f"Nom: {self.lastName.capitalize()}", 30)
         infoLabel(f"Prénom: {self.firstName.capitalize()} ", 74)
-        infoLabel(f"Date de naissance: {dateOfBirth}", 118)
-        infoLabel(f"Genre: {gender.capitalize()}", 162)
-        infoLabel(f"Age : {calculateAge(dateOfBirth)}", 206)
+        infoLabel(f"Date de naissance: {self.dateOfBirth}", 118)
+        infoLabel(f"Genre: {self.gender.capitalize()}", 162)
+        infoLabel(f"Age : {calculateAge(self.dateOfBirth)}", 206)
         infoLabel(f"Poids recent: 80kg", 250)
         infoLabel(f"Taille recente: 1m80", 294)
         infoLabel(f"IMC recent: 24.9", 338)
         infoLabel(
-            f"Numero de téléphone: {phoneNumber if phoneNumber else 'Non spécifié'} ",
+            f"Numero de téléphone: {self.phoneNumber if self.phoneNumber else 'Non spécifié'} ",
             382,
         )
         infoLabel(f"Derniere visite: 20/7/2021 ", 426)
         infoLabel(
-            f"Mots clés: {keywords if keywords else 'Non spécifié'} ",
+            f"Mots clés: {self.keywords if self.keywords else 'Non spécifié'} ",
             470,
         )
 
         CTkButton(
-            patientInfoCard,
+            self.patientInfoCard,
             text="Modifier",
             width=240,
             height=42,
@@ -475,6 +481,7 @@ class PatientInfos(CTkFrame):
             hover_color=Colors.Sepia,
             font=font(20),
             text_color=Colors.White,
+            command=self.editview
         ).place(relx=0.5, y=530, anchor=CENTER)
 
         CTkButton(
@@ -541,6 +548,176 @@ class PatientInfos(CTkFrame):
 
         CTkLabel(courbeDeCroissance, image=img).place(x=0, y=43)
 
+
+    def editview(self):
+        def close():
+            self.editpatient.destroy()
+            self.editpatient=None
+
+        if self.editpatient:
+            self.editpatient.focus()
+        else:
+        
+            self.editpatient = CTkToplevel(fg_color=Colors.Cadet)
+            self.editpatient.protocol("WM_DELETE_WINDOW", lambda: close())
+            self.editpatient.resizable(False, False)
+            
+            center(400, 460, self.editpatient)
+
+            CTkLabel(
+                self.editpatient,
+                text="Modifier le patient",
+                fg_color=Colors.Liver,
+                text_color=Colors.White,
+                font=font(22),
+                corner_radius=15,
+            ).place(x=82, y=16, height=51, width=246)
+
+            CTkLabel(self.editpatient, text="Nom:", text_color=Colors.White, font=font(17)).place(x=160, y=90)
+            CTkLabel(self.editpatient, text="Prénom:", text_color=Colors.White, font=font(17)).place(x=132, y=134)
+            CTkLabel(self.editpatient, text="Date de naissance:", text_color=Colors.White, font=font(17)).place(x=45, y=178)
+            CTkLabel(self.editpatient, text="Genre:", text_color=Colors.White, font=font(17)).place(x=147, y=222)
+            CTkLabel(self.editpatient, text="Numero de téléphone:", text_color=Colors.White, font=font(17)).place(x=20, y=265)
+            CTkLabel(self.editpatient, text="mots clés:", text_color=Colors.White, font=font(17)).place(x=117, y=308)
+
+
+            self.firstnameEntry = CTkEntry(
+                self.editpatient,
+                fg_color=Colors.White,
+                corner_radius=10,
+                placeholder_text="",
+                text_color=Colors.Cadet,
+            )
+            self.firstnameEntry.place(x=215, y=91, width=140, height=26)
+            self.firstnameEntry.insert(0, self.firstName)
+            
+
+            self.lastNameEntry = CTkEntry(
+                self.editpatient,
+                fg_color=Colors.White,
+                corner_radius=10,
+                placeholder_text="",
+                text_color=Colors.Cadet,
+            )
+            self.lastNameEntry.place(x=215, y=134, width=140, height=26)
+            self.lastNameEntry.insert(0, self.lastName)
+
+
+            self.dateOfbirthEntry = CTkEntry(
+                self.editpatient,
+                fg_color=Colors.White,
+                corner_radius=10,
+                placeholder_text="",
+                text_color=Colors.Cadet,
+            )
+            self.dateOfbirthEntry.place(x=215, y=179, width=140, height=26)
+            self.dateOfbirthEntry.insert(0, self.dateOfBirth)
+
+
+            self.GenderEntry = CTkComboBox(
+                self.editpatient,
+                values= ["Genre", "garçon", "fille"],
+                font=font(15),
+                text_color=Colors.Cadet,
+                dropdown_fg_color=Colors.Liver,
+                corner_radius=10,
+                fg_color=Colors.White,
+                dropdown_font=font(15),
+                command=lambda event: check()
+            )
+            self.GenderEntry.place(x=215, y=222, width=140, height=26)
+            self.GenderEntry.set(self.gender)
+
+
+            self.phonenumberEntry = CTkEntry(
+                self.editpatient,
+                fg_color=Colors.White,
+                corner_radius=10,
+                placeholder_text="",
+                text_color=Colors.Cadet,
+
+            )
+            self.phonenumberEntry.place(x=215, y=265, width=140, height=26)
+            if self.phoneNumber:
+                self.phonenumberEntry.insert(0, self.phoneNumber)
+            
+
+            self.keywordsEntry = CTkEntry(
+                self.editpatient,
+                fg_color=Colors.White,
+                corner_radius=10,
+                placeholder_text="",
+                text_color=Colors.Cadet,
+            )
+            self.keywordsEntry.place(x=215, y=310, width=140, height=26)
+            if self.keywords:
+                self.keywordsEntry.insert(0, self.keywords)
+
+
+            self.confirm = CTkButton(self.editpatient, text="Sauvegarder", text_color=Colors.White, fg_color=Colors.Silver, hover_color=Colors.Sepia, state=False, font=font(16), command=lambda: self.edit())
+            self.confirm.place(x=193, y=380, width=150, height=42)
+
+            self.cancel = CTkButton(self.editpatient, text="Annuler", fg_color=Colors.Silver, font=font(16), hover_color=Colors.Mandarin, command=close)
+            self.cancel.place(x=34, y=380, width=120, height=42)
+
+
+            self.firstnameEntry.bind("<KeyRelease>", lambda event:check())
+            self.lastNameEntry.bind("<KeyRelease>", lambda event:check())
+            self.dateOfbirthEntry.bind("<KeyRelease>", lambda event: check())
+            self.phonenumberEntry.bind("<KeyRelease>", lambda event:check())
+            self.keywordsEntry.bind("<KeyRelease>", lambda event:check())
+            
+
+            def check():
+                keywords = self.keywordsEntry.get() if self.keywordsEntry.get() else None
+
+                if self.firstnameEntry.get()!=self.firstName or self.lastNameEntry.get()!=self.lastName or self.dateOfbirthEntry.get()!=self.dateOfBirth or self.GenderEntry.get()!=self.gender or self.phonenumberEntry.get()!=str(self.phoneNumber) or keywords!=self.keywords:
+                    self.confirm.configure(fg_color=Colors.Mandarin)
+                    self.confirm.configure(state=NORMAL)
+                else:
+
+                    self.confirm.configure(fg_color=Colors.Silver)
+                    self.confirm.configure(state=False)
+
+                
+    def edit(self):
+            def dateofBirthcheck(Bday):
+                try:
+                    if Bday:
+                        return datetime.strptime(Bday, "%d/%m/%Y")
+                    else:
+                        return None
+                except:
+                    return "problem"
+
+            NfirstName = self.firstnameEntry.get()
+            NlastName = self.lastNameEntry.get()
+            NdateOfBirth = dateofBirthcheck(self.dateOfbirthEntry.get())
+            Ngender = self.GenderEntry.get() if self.GenderEntry.get() in ["Fille", "Garçon", "fille", "garcon", "garçon"] else None
+            NphoneNumber = self.phonenumberEntry.get() if self.phonenumberEntry.get() else None
+            Nkeywords = self.keywordsEntry.get() if self.keywordsEntry.get() else None
+
+
+            if NfirstName and NlastName and NdateOfBirth!="problem" and NdateOfBirth and Ngender:
+                self.window.curr.execute("""UPDATE "patients" SET 
+                firstName=?, 
+                lastName=?, 
+                dateOfBirth=?, 
+                gender=?, 
+                phoneNumber=?, 
+                keywords=?
+                WHERE id=?""",
+                (NfirstName, NlastName, NdateOfBirth.strftime("%d/%m/%Y"), Ngender, NphoneNumber,Nkeywords,self.patientId))
+                self.window.conn.commit()
+
+                self.editpatient.destroy()
+
+                PatientInfos(self.master, self.patientId).place(x=400, y=0, width=879, height=681)
+            else:
+                self.AlertLabel = CTkLabel(self.editpatient, text="Veuillez entrer toute les informations requise correctement" if self.dateOfBirth!="problem" else "Veuillez entrer la dade dans le bon format ex: 15/11/2006", font=font(20), fg_color=Colors.Danger, text_color=Colors.White, height=45)
+                self.AlertLabel.place(x=0,y=637, relwidth=1)
+
+            
     def deletepatient(self):
 
         
@@ -557,12 +734,12 @@ class PatientInfos(CTkFrame):
             AddPatient(self.master).place(x=400, y=0, width=880, height=682)
             PatientsList(self.master).place(x=0, y=0, width=400, height=682)
 
-        CTkLabel(self.toplevel, text="Supprimer le patient", fg_color=Colors.Liver, font=font(25), text_color=Colors.White).place(x=124, y=34, width=320, height=70)
-        CTkLabel(self.toplevel, text=f"étes vous sure de vouloir supprimer le patient {self.firstName} {self.lastName} ?", font=font(18), text_color=Colors.White).place(x=40, y=136)
-        CTkButton(self.toplevel, text="Continuer", fg_color=Colors.Mandarin, text_color=Colors.White, hover_color=Colors.Danger, command=delete).place(x=308, y=178, width=130, height=50)
-        CTkButton(self.toplevel, text="Annuler", fg_color=Colors.Silver, text_color=Colors.White, hover_color=Colors.Danger, command=close).place(x=140, y=178, width=130, height=50)
+        CTkLabel(self.toplevel, text="Supprimer le patient", fg_color=Colors.Liver, font=font(25), text_color=Colors.White, corner_radius=15).place(x=124, y=34, width=320, height=70)
+        CTkLabel(self.toplevel, text=f"Étes vous sure de vouloir supprimer le patient :", font=font(16), text_color=Colors.White).place(relx=0.5, rely=0.51, anchor=CENTER)
+        CTkLabel(self.toplevel, text=f"{self.firstName} {self.lastName}", font=font(16), text_color=Colors.Mandarin).place(relx=0.5, rely=0.6, anchor=CENTER)
 
-        
+        CTkButton(self.toplevel, text="Supprimer", fg_color=Colors.Danger, text_color=Colors.White, hover_color=Colors.Danger_hover, command=delete, font=font(15)).place(x=308, y=178, width=130, height=50)
+        CTkButton(self.toplevel, text="Annuler", fg_color=Colors.Silver, text_color=Colors.White, hover_color=Colors.Mandarin, command=close, font=font(15)).place(x=140, y=178, width=130, height=50)
 
         
 
