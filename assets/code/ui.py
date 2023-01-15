@@ -16,6 +16,7 @@ class Colors:
     Danger = "#FF002D"
     Danger_hover = "#B3001F"
 
+    Danger_hover = "#B3001F"
 
 def font(size: int) -> CTkFont:
     return CTkFont(family="Roboto", size=size, weight="bold")

@@ -1,15 +1,54 @@
 from customtkinter import *
-from assets.code.ui import clear, Colors, font
+from assets.code.ui import clear, Colors, font, center
 from assets.code.logic import strToDatetime
 from PIL import Image
 from datetime import datetime
 from src.app.visits import VisitsPage
 
 class AddMeeting(CTkToplevel):
-    def __init__(self, window):
-        super().__init__(window, fg_color=Colors.Cadet)
-        self.title("Ajouter un rendez-vous")
-        self.geometry("500x500")
+    def __init__(self):
+        super().__init__(fg_color=Colors.Cadet)
+
+        self.title("Ajouter un rendez-vous") 
+        self.resizable(False, False)
+
+        center(400, 400, self)
+
+        self.view()
+
+    def view(self):
+        CTkLabel(self, width=300, height=60, text="Ajouter rendez-vous", fg_color=Colors.Liver, text_color=Colors.White, corner_radius=20, font=font(24)).pack(pady=15)
+
+        CTkLabel(self,text="Patient:", font=font(24), text_color=Colors.White).place(x=44, y=118)
+        CTkLabel(self, text="Date:", font=font(24), text_color=Colors.White).place(x=72, y=197)
+        CTkLabel(self,text="Heure:", font=font(24), text_color=Colors.White).place(x=57, y=276)
+
+        CTkLabel(self,text="/", font=font(15), text_color=Colors.White).place(x=197, y=198)
+        CTkLabel(self,text="/", font=font(15), text_color=Colors.White).place(x=247, y=198)
+        CTkLabel(self,text=":", font=font(15), text_color=Colors.White).place(x=252, y=277)
+
+        self.patientInput = CTkEntry(self, fg_color=Colors.White, border_width=1, border_color=Colors.Cadet, placeholder_text="Patient", font=font(20), text_color=Colors.Cadet, width=200, height=30, corner_radius=10, justify=CENTER)
+        self.patientInput.place(x=155, y=117)
+
+        self.dayInput = CTkEntry(self, fg_color=Colors.White, border_width=1, border_color=Colors.Cadet, placeholder_text="J", font=font(15), text_color=Colors.Cadet, width=40, height=30, corner_radius=10, justify=CENTER)
+        self.dayInput.place(x=155, y=196)
+
+        self.monthInput = CTkEntry(self, fg_color=Colors.White, border_width=1, border_color=Colors.Cadet, placeholder_text="M", font=font(15), text_color=Colors.Cadet, width=40, height=30, corner_radius=10, justify=CENTER)
+        self.monthInput.place(x=206, y=196)
+
+        self.yearInput = CTkEntry(self, fg_color=Colors.White, border_width=1, border_color=Colors.Cadet, placeholder_text="Année", font=font(15), text_color=Colors.Cadet, width=100, height=30, corner_radius=10, justify=CENTER)
+        self.yearInput.place(x=255, y=196)
+
+        self.hourInput = CTkEntry(self, fg_color=Colors.White, border_width=1, border_color=Colors.Cadet, placeholder_text="Heure", font=font(20), text_color=Colors.Cadet, width=95, height=30, corner_radius=10, justify=CENTER)
+        self.hourInput.place(x=155, y=275)
+
+        self.minuteInput = CTkEntry(self, fg_color=Colors.White, border_width=1, border_color=Colors.Cadet, placeholder_text="Minute", font=font(20), text_color=Colors.Cadet, width=95, height=30, corner_radius=10, justify=CENTER)
+        self.minuteInput.place(x=260, y=275)
+
+        CTkButton(self, text="Ajouter", text_color=Colors.White, fg_color=Colors.Mandarin, hover_color=Colors.Sepia, width=250, height=45, font=font(30), corner_radius=15, command=self.save).pack(side=BOTTOM, pady=15)
+
+    def save(self):
+        return
 
 class Meeting(CTkFrame):
     def __init__(self, master: CTkFrame, patientId: int, dt: datetime):
@@ -38,6 +77,8 @@ class DailyMeetings(CTkFrame):
         self.window = master.window
         self.page = 0
 
+        self.topLevel = None
+
         self.view()
 
     def view(self):
@@ -56,6 +97,7 @@ class DailyMeetings(CTkFrame):
             width=75,
             height=74,
             text="",
+            command=self.addMeeting,
             image=CTkImage(
                 light_image=Image.open("assets/imgs/add rdv icon.png"), size=(50, 50)
             ),
@@ -65,6 +107,17 @@ class DailyMeetings(CTkFrame):
         self.meetingsFrame.place(x=0, y=75, width=400, height=607)
 
         self.load()
+
+    def addMeeting(self):
+        def close():
+            self.topLevel.destroy()
+            self.topLevel = None
+
+        if self.topLevel:
+            self.topLevel.focus()
+        else:
+            self.topLevel = AddMeeting()     
+            self.topLevel.protocol("WM_DELETE_WINDOW", close)
 
     def load(self):
         clear(self.meetingsFrame)
