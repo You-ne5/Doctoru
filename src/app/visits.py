@@ -2,13 +2,16 @@ from datetime import datetime
 from customtkinter import *
 from assets.code.ui import clear, Colors, font
 from PIL import Image
-from src.app import patients
+from src.app import patients, navbar
 
 class VisitBox(CTkFrame):
-    def __init__(self, master: CTkFrame):
+    def __init__(self, master: CTkFrame, patientId=None):
         super().__init__(master, corner_radius=0, fg_color=Colors.Cadet)
+
         self.window = master.window
         self.master = master
+
+        self.patient = self.window.curr.execute("""SELECT * FROM "patients" WHERE id=?""", (patientId,)).fetchone()
 
         self.view()
         self.logic()
@@ -34,7 +37,8 @@ class VisitBox(CTkFrame):
             font=font(23),
         )
         self.patientEntry.place(x=151, y=125, height=45, width=300)
-
+        if self.patient:
+            self.patientEntry.insert(0, " ".join([self.patient[1], self.patient[2]]))
     
         self.poidsEntry=CTkEntry(
             self,
@@ -112,7 +116,7 @@ class VisitBox(CTkFrame):
             corner_radius=15,
             font=font(20),
             hover_color=Colors.Sepia,
-            command = lambda:[patients.PatientsPage(self.master.master.master)]
+            command = lambda:navbar.NavBar(self.master.master).patientsButton.invoke()
         ).place(x=465, y=130)
 
         CTkButton(
@@ -168,7 +172,28 @@ class VisitBox(CTkFrame):
         self.montant = self.montantEntry.get()
         self.DEP = self.DEPentry.get() if self.DEPentry.get() else None
 
-        if self.patientid and self.poids and self.taille and self.motif and self.conclution and self.montant:
+        try:
+            int(self.poids)
+        except:
+            self.poids=None
+        try:
+            int(self.taille)
+        except:
+            self.taille=None
+        try:
+            int(self.montant)
+        except:
+            self.montant=None
+        try:
+            if self.DEP:
+                int(self.DEP)
+        except:
+            self.DEP="problem"
+
+
+
+
+        if self.patientid and self.poids and self.taille and self.motif and self.conclution and self.montant and self.DEP!="problem":
             self.window.curr.execute("""INSERT INTO "visits" (patientId, datetime, reason, height, weight, conclusion, montant, DEP) VALUES (?,?,?,?,?,?,?,?)""",
             (
                 self.patientid,
@@ -197,7 +222,7 @@ class VisitBox(CTkFrame):
     def suggest(self):
 
         if self.patientEntry.get():
-            suggestionslist = [patient for patient in self.patientlist if patient[1].startswith(self.patientEntry.get()) or patient[0].startswith(self.patientEntry.get()) or " ".join(patient).startswith(self.patientEntry.get())]
+            suggestionslist = [patient for patient in self.patientlist if patient[1].lower().startswith(self.patientEntry.get().lower()) or patient[0].lower().startswith(self.patientEntry.get().lower()) or " ".join(patient).lower().startswith(self.patientEntry.get().lower())]
             if suggestionslist:
                 if self.suggestions:
                     self.suggestions.destroy()
@@ -215,26 +240,28 @@ class VisitBox(CTkFrame):
                     btn.bind("<Button-1>", self.fill)
 
             else:
-                self.suggestions.destroy()
+                if self.suggestions:
+                    self.suggestions.destroy()
             
 
         else:
             if self.suggestions:
                 self.suggestions.destroy()
                 self.suggestions = None
-        
+
 class VisitsPage(CTkFrame):
-    def __init__(self, master: CTkFrame) -> None:
+    def __init__(self, master: CTkFrame, patientId=None) -> None:
         clear(master)
         super().__init__(master, corner_radius=0, fg_color=Colors.Coral)
         self.pack(fill="both", expand=True)
 
+        self.patientId = patientId
+
         self.window = master.window
         self.master = master
 
-        self.window = master.window
 
         self.view()
 
     def view(self):
-        VisitBox(self).place(x=680, y=0, height=682, width=600)
+        VisitBox(self, self.patientId).place(x=680, y=0, height=682, width=600)

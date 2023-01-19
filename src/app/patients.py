@@ -3,7 +3,7 @@ from customtkinter import *
 from assets.code.ui import clear, Colors, font, center
 from PIL import Image
 from assets.code.logic import calculateAge, strToDatetime
-
+from src.app import visits
 
 class confirm(CTkToplevel):
     def __init__(self, patientname, patientid, master):
@@ -170,7 +170,6 @@ class AddPatient(CTkFrame):
         self.firstName = self.firstNameEntry.get()
         self.lastName = self.lastNameEntry.get()
         self.dateOfBirth = dateofBirthcheck(self.dateOfBirthEntry.get())
-        print(self.dateOfBirth)
         self.genre = self.GenderEntry.get() if self.GenderEntry.get() in ["Fille", "Garçon"] else None
         self.maladiesChroniques = (self.maladiesChroniquesEntry.get() if self.maladiesChroniquesEntry.get() else None)
         self.phoneNumber = self.phoneNumberEntry.get() if self.phoneNumberEntry.get() else None
@@ -201,7 +200,7 @@ class AddPatient(CTkFrame):
     def addpatient(self):
         
         self.window.curr.execute(
-            """INSERT INTO "patients" (firstName, lastName, dateOfBirth, gender, phoneNumber, keywords, maladieChronique) VALUES (?,?,?,?,?,?,?)"""
+            """INSERT INTO "patients" (firstName, lastName, dateOfBirth, gender, phoneNumber, keywords, maladiesChroniques) VALUES (?,?,?,?,?,?,?)"""
             "",
             (
                 self.firstName,
@@ -217,13 +216,21 @@ class AddPatient(CTkFrame):
         self.window.conn.commit()
 
         pateintid = self.window.curr.execute("""SELECT id FROM patients""").fetchall()[-1][0]
+        
+        PatientsList(self.master).place(x=0, y=0, width=400, height=682)
 
         self.firstNameEntry.delete(0, END)
         self.lastNameEntry.delete(0, END)
         self.dateOfBirthEntry.delete(0, END)
-        self.phoneNumberEntry.delete(0, END)
-        self.keywordsEntry.delete(0, END)
-        self.maladiesChroniquesEntry.delete(0, END)
+        if self.phoneNumberEntry.get():
+            self.phoneNumberEntry.delete(0, END)
+
+        if self.keywordsEntry.get():
+            self.keywordsEntry.delete(0, END)
+
+        if self.maladiesChroniquesEntry.get():
+            self.maladiesChroniquesEntry.delete(0, END)
+
 
         self.AlertLabel = CTkLabel(self, text="Patient ajouté avec succes!", font=font(20), fg_color=Colors.Success, text_color=Colors.White, height=45)
         self.AlertLabel.place(x=0,y=637, relwidth=1)
@@ -308,6 +315,9 @@ class PatientsList(CTkFrame):
         pages = []
 
         search = self.searchPatient.get().lower()
+        if not patients:
+            CTkLabel(self, text="Aucun patient", text_color=Colors.White, font=font(24)).place(relx=0.5, rely=0.5, anchor=CENTER)
+            return
 
         for id, firstName, lastName, dateOfBirth in patients:
             if not pages or len(pages[-1]) == 4:
@@ -428,7 +438,7 @@ class PatientInfos(CTkFrame):
 
     def view(self):
 
-        id, self.firstName, self.lastName, self.dateOfBirth, self.gender, self.phoneNumber, self.keywords, self.maladiesChroniques = self.window.curr.execute("""SELECT * FROM patients WHERE id = ?""", (self.patientId,)).fetchone()
+        id, self.firstName, self.lastName, self.dateOfBirth, self.gender, self.phoneNumber, self.keywords, self.maladiesChroniques, self.dateOfCreation = self.window.curr.execute("""SELECT * FROM patients WHERE id = ?""", (self.patientId,)).fetchone()
 
         if not self.keywords:
             self.keywords=None
@@ -504,6 +514,7 @@ class PatientInfos(CTkFrame):
             corner_radius=20,
             hover_color=Colors.Sepia,
             text_color=Colors.White,
+            command=lambda:visits.VisitsPage(self.master.master, self.patientId).place(x=0, y=150, width=1280, height=682)
         ).place(x=650, y=585, height=72, width=200)
 
         CTkButton(
@@ -557,11 +568,10 @@ class PatientInfos(CTkFrame):
         if self.editpatient:
             self.editpatient.focus()
         else:
-        
             self.editpatient = CTkToplevel(fg_color=Colors.Cadet)
             self.editpatient.protocol("WM_DELETE_WINDOW", lambda: close())
             self.editpatient.resizable(False, False)
-            
+            self.editpatient.title("Modifier le patient")
             center(400, 460, self.editpatient)
 
             CTkLabel(
@@ -670,8 +680,10 @@ class PatientInfos(CTkFrame):
 
             def check():
                 keywords = self.keywordsEntry.get() if self.keywordsEntry.get() else None
+                phoneNumber = self.phonenumberEntry.get() if self.phonenumberEntry.get() else None
+                
+                if self.firstnameEntry.get()!=self.firstName or self.lastNameEntry.get()!=self.lastName or self.dateOfbirthEntry.get()!=self.dateOfBirth or self.GenderEntry.get()!=self.gender or phoneNumber!=self.phoneNumber or keywords!=self.keywords:
 
-                if self.firstnameEntry.get()!=self.firstName or self.lastNameEntry.get()!=self.lastName or self.dateOfbirthEntry.get()!=self.dateOfBirth or self.GenderEntry.get()!=self.gender or self.phonenumberEntry.get()!=str(self.phoneNumber) or keywords!=self.keywords:
                     self.confirm.configure(fg_color=Colors.Mandarin)
                     self.confirm.configure(state=NORMAL)
                 else:
@@ -731,6 +743,7 @@ class PatientInfos(CTkFrame):
         def delete():
             self.window.curr.execute("""DELETE FROM patients WHERE id=?""", (self.patientId,))
             close()
+            self.window.conn.commit()
             AddPatient(self.master).place(x=400, y=0, width=880, height=682)
             PatientsList(self.master).place(x=0, y=0, width=400, height=682)
 

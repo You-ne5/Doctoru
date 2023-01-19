@@ -4,17 +4,29 @@ from assets.code.logic import strToDatetime
 from PIL import Image
 from datetime import datetime
 from src.app.visits import VisitsPage
+import sqlite3
+
 
 class AddMeeting(CTkToplevel):
-    def __init__(self):
+    def __init__(self, master):
         super().__init__(fg_color=Colors.Cadet)
 
         self.title("Ajouter un rendez-vous") 
         self.resizable(False, False)
+        center(400, 420, self)
 
-        center(400, 400, self)
+        self.conn = sqlite3.connect("main.db")
+        self.curr = self.conn.cursor()
+        
+        self.master = master
+
+        self.patientAlertLabel = None
+        self.infoAlertLabel = None
+        self.suggestions = None
+        self.patientlist = self.curr.execute("""SELECT firstName, lastName FROM patients""").fetchall()
 
         self.view()
+        
 
     def view(self):
         CTkLabel(self, width=300, height=60, text="Ajouter rendez-vous", fg_color=Colors.Liver, text_color=Colors.White, corner_radius=20, font=font(24)).pack(pady=15)
@@ -29,7 +41,7 @@ class AddMeeting(CTkToplevel):
 
         self.patientInput = CTkEntry(self, fg_color=Colors.White, border_width=1, border_color=Colors.Cadet, placeholder_text="Patient", font=font(20), text_color=Colors.Cadet, width=200, height=30, corner_radius=10, justify=CENTER)
         self.patientInput.place(x=155, y=117)
-
+        self.patientInput.bind("<KeyRelease>", lambda _:self.suggest())
         self.dayInput = CTkEntry(self, fg_color=Colors.White, border_width=1, border_color=Colors.Cadet, placeholder_text="J", font=font(15), text_color=Colors.Cadet, width=40, height=30, corner_radius=10, justify=CENTER)
         self.dayInput.place(x=155, y=196)
 
@@ -45,10 +57,77 @@ class AddMeeting(CTkToplevel):
         self.minuteInput = CTkEntry(self, fg_color=Colors.White, border_width=1, border_color=Colors.Cadet, placeholder_text="Minute", font=font(20), text_color=Colors.Cadet, width=95, height=30, corner_radius=10, justify=CENTER)
         self.minuteInput.place(x=260, y=275)
 
-        CTkButton(self, text="Ajouter", text_color=Colors.White, fg_color=Colors.Mandarin, hover_color=Colors.Sepia, width=250, height=45, font=font(30), corner_radius=15, command=self.save).pack(side=BOTTOM, pady=15)
+        CTkButton(self, text="Ajouter", text_color=Colors.White, fg_color=Colors.Mandarin, hover_color=Colors.Sepia, width=250, height=45, font=font(30), corner_radius=15, command=self.save).place(x=75, y=335)
+
+
+
+    def fill(self, event):
+        for btn in self.btns:
+            if str(btn).split(".") == str(event.widget).split(".")[:-1]:
+                self.patientInput.delete(0, END)
+                self.patientInput.insert(0, self.btns[btn])
+                self.suggestions.destroy()
+                return
+
+    def suggest(self):
+
+        if self.patientInput.get():
+            suggestionslist = [patient for patient in self.patientlist if patient[1].lower().startswith(self.patientInput.get().lower()) or patient[0].lower().startswith(self.patientInput.get().lower()) or " ".join(patient).lower().startswith(self.patientInput.get().lower())]
+            if suggestionslist:
+                if self.suggestions:
+                    self.suggestions.destroy()
+                self.suggestions = CTkFrame(self, fg_color=Colors.Coral)
+                self.suggestions.place(x=155, y=147)
+
+                self.btns = {}
+
+                for suggestion in suggestionslist:
+                    btn = CTkButton(self.suggestions, text=suggestion, text_color=Colors.White, fg_color=Colors.Coral, corner_radius=0, border_width=1, font=font(16), width=200)
+                    btn.pack()
+
+                    self.btns[btn] = suggestion
+
+                    btn.bind("<Button-1>", self.fill)
+
+            else:
+                if self.suggestions:
+                    self.suggestions.destroy()
+            
+
+        else:
+            if self.suggestions:
+                self.suggestions.destroy()
+                self.suggestions = None
 
     def save(self):
-        return
+        if self.dayInput.get() and self.monthInput.get() and self.yearInput.get() and self.hourInput.get() and self.minuteInput.get():
+            if int(self.dayInput.get()) in range(1,32) and int(self.monthInput.get()) in range(1,13) and int(self.yearInput.get()) >= datetime.now().year and int(self.hourInput.get()) in range(1,24) and int(self.minuteInput.get()) in range(60):
+                print("if")
+                if self.infoAlertLabel:
+                    self.infoAlertLabel.destroy()
+
+                meetingdate = f"{self.dayInput.get()}/{self.monthInput.get()}/{self.yearInput.get()} {self.hourInput.get()}:{self.minuteInput.get()}"
+                try:
+                    self.curr.execute("""SELECT id FROM "patients" WHERE firstName=? AND lastName=?""", (self.patientInput.get().split()[0], self.patientInput.get().split()[1]))
+                    self.patientId = self.curr.fetchone()[0]
+                    if self.patientAlertLabel:
+                        self.patientAlertLabel.destroy()
+                        self.patientAlertLabel=None
+                
+                except:
+                    self.patientAlertLabel = CTkLabel(self, text="Ce patient N'existe pas!", font=font(20), fg_color=Colors.Danger, text_color=Colors.White, height=30)
+                    self.patientAlertLabel.place(x=0, y=390, relwidth=1)
+                    return
+                
+                self.curr.execute("""INSERT INTO "meetings" (patientId, datetime) values (?,?)""", (self.patientId, meetingdate))
+                self.conn.commit()
+                self.destroy()
+                DailyMeetings(self.master).place(x=0, y=0, width=400, height=682)
+            
+            else:
+                self.infoAlertLabel= CTkLabel(self, text="veuillez entrer toutes les informations correctement!", font=font(14), fg_color=Colors.Danger, text_color=Colors.White, height=30)
+                self.infoAlertLabel.place(x=0, y=390, relwidth=1)
+                
 
 class Meeting(CTkFrame):
     def __init__(self, master: CTkFrame, patientId: int, dt: datetime):
@@ -116,7 +195,7 @@ class DailyMeetings(CTkFrame):
         if self.topLevel:
             self.topLevel.focus()
         else:
-            self.topLevel = AddMeeting()     
+            self.topLevel = AddMeeting(self.master)     
             self.topLevel.protocol("WM_DELETE_WINDOW", close)
 
     def load(self):
@@ -125,9 +204,7 @@ class DailyMeetings(CTkFrame):
             """SELECT patientId, datetime FROM "meetings" """
         ).fetchall()
 
-        if not meetings:
-            CTkLabel(self, text="Aucun rendez-vous", text_color=Colors.White, font=font(24)).place(relx=0.5, rely=0.5, anchor=CENTER)
-            return
+        
 
         pages = []
 
@@ -141,6 +218,10 @@ class DailyMeetings(CTkFrame):
                 firstname, lastname = self.window.curr.execute(""" SELECT firstName, lastName FROM patients WHERE id = ?""", (patientId,)).fetchone()
 
                 pages[-1].append((" ".join([firstname.capitalize(), lastname.capitalize()]), dt))
+    
+        if not any([True if page else False for page in pages]):
+            CTkLabel(self, text="Aucun rendez-vous", text_color=Colors.White, font=font(24)).place(relx=0.5, rely=0.5, anchor=CENTER)
+            return
 
         for patientId, dt in pages[self.page]:
             meetingCard = Meeting(self.meetingsFrame, patientId, dt)
@@ -182,6 +263,8 @@ class DailyMeetings(CTkFrame):
     def update(self, num):
         self.page += num
         self.load()
+    
+    
 
 
 class ActionBar(CTkFrame):

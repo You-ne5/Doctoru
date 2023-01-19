@@ -16,4 +16,4 @@ def calculateAge(Bday):
 
 
 def strToDatetime(text: str) -> datetime:
-    return datetime.strptime(text, "%Y-%m-%d %H:%M:%S.%f")
+    return datetime.strptime(text, "%d/%m/%Y %H:%M")

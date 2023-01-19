@@ -73,7 +73,7 @@ class NavBar(CTkFrame):
             self,
             fg_color=Colors.Cadet,
             hover_color=Colors.Sepia,
-            command=lambda: [select(self,self.patientsButton), patients.PatientsPage(master).place(x=0, y=150, width=1280, height=682)],
+            command=lambda: [select(self, self.patientsButton), patients.PatientsPage(master).place(x=0, y=150, width=1280, height=682)],
             corner_radius=10,
             width=70,
             height=70,
