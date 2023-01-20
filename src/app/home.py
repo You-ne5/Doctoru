@@ -261,8 +261,9 @@ class DailyMeetings(CTkFrame):
         ).place(x=134, y=0)
 
     def update(self, num):
-        self.page += num
-        self.load()
+        if num:
+            self.page += num
+            self.load()
     
     
 
@@ -363,7 +364,7 @@ class PatientsQueue(CTkFrame):
 
     def load(self):
         clear(self.waitingPatientsFrame)
-        patientsWaiting = self.window.curr.execute(""" SELECT patientFirstName, patientLastName, datetime FROM waiting WHERE seen = ?""", (0,)).fetchall()
+        patientsWaiting = self.window.curr.execute("""SELECT patientFirstName, patientLastName, datetime FROM waiting WHERE seen = ?""", (0,)).fetchall()
         patientsWaiting = [patient for patient in patientsWaiting if patient[2].startswith(str(datetime.now().strftime("%d/%m/%Y")))]
 
         if patientsWaiting:
@@ -384,11 +385,11 @@ class PatientsQueue(CTkFrame):
     def next(self):
         patientsWaiting = self.window.curr.execute(""" SELECT id, datetime FROM waiting WHERE seen = ?""", (0,)).fetchall()
         patientsWaiting = [patient for patient in patientsWaiting if patient[1].startswith(str(datetime.now().strftime("%d/%m/%Y")))]
-        
-        self.window.curr.execute("""UPDATE waiting SET seen = ? WHERE id = ?""", (1, patientsWaiting[0][0]))
-        self.window.conn.commit()
+        if patientsWaiting:
+            self.window.curr.execute("""UPDATE waiting SET seen = ? WHERE id = ?""", (1, patientsWaiting[0][0]))
+            self.window.conn.commit()
 
-        self.load()
+            self.load()
 
 
 class DailyVisits(CTkFrame):

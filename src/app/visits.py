@@ -198,9 +198,9 @@ class VisitBox(CTkFrame):
             (
                 self.patientid,
                 datetime.now().strftime("%d/%m/%Y %H:%M"),
-                self.poids,
-                self.taille,
                 self.motif,
+                self.taille,
+                self.poids,
                 self.conclution,
                 self.montant,
                 self.DEP,
