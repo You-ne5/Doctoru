@@ -364,7 +364,7 @@ class PatientsQueue(CTkFrame):
 
     def load(self):
         clear(self.waitingPatientsFrame)
-        patientsWaiting = self.window.curr.execute("""SELECT patientFirstName, patientLastName, datetime FROM waiting WHERE seen = ?""", (0,)).fetchall()
+        patientsWaiting = self.window.curr.execute("""SELECT patientFirstName, patientLastName, datetime FROM "waiting" WHERE seen = ?""", (0,)).fetchall()
         patientsWaiting = [patient for patient in patientsWaiting if patient[2].startswith(str(datetime.now().strftime("%d/%m/%Y")))]
 
         if patientsWaiting:
@@ -376,6 +376,7 @@ class PatientsQueue(CTkFrame):
             waitingRoom.pack(fill="x")
 
             for waitingPatient in patientsWaiting[1:6]:
+                print(waitingPatient)
                 CTkLabel(waitingRoom, text=" ".join(waitingPatient[0:2]), width=215, height=35, fg_color=Colors.Coral, text_color=Colors.White, font=font(16), corner_radius=10).pack(pady=5)
 
 
@@ -385,6 +386,7 @@ class PatientsQueue(CTkFrame):
     def next(self):
         patientsWaiting = self.window.curr.execute(""" SELECT id, datetime FROM waiting WHERE seen = ?""", (0,)).fetchall()
         patientsWaiting = [patient for patient in patientsWaiting if patient[1].startswith(str(datetime.now().strftime("%d/%m/%Y")))]
+        print(patientsWaiting)
         if patientsWaiting:
             self.window.curr.execute("""UPDATE waiting SET seen = ? WHERE id = ?""", (1, patientsWaiting[0][0]))
             self.window.conn.commit()

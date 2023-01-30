@@ -175,6 +175,9 @@ class AddPatient(CTkFrame):
         self.phoneNumber = self.phoneNumberEntry.get() if self.phoneNumberEntry.get() else None
         self.keywords = self.keywordsEntry.get() if self.keywordsEntry.get() else None
 
+        if not self.firstName and not self.lastName and not self.dateOfBirth and not self.genre and not self.maladiesChroniques and not self.phoneNumber and not self.keywords:
+            return
+
         if self.firstName and self.lastName and self.dateOfBirth!="problem" and self.dateOfBirth and self.genre:
             self.window.curr.execute("""SELECT id FROM patients WHERE firstName=? AND lastName=?""", (self.firstName, self.lastName,))
             id = self.window.curr.fetchone()
@@ -183,7 +186,7 @@ class AddPatient(CTkFrame):
             else:
                 self.addpatient()
         else:
-            self.AlertLabel = CTkLabel(self, text="Veuillez entrer toute les informations requise correctement" if self.dateOfBirth!="problem" else "Veuillez entrer la dade dans le bon format ex: 15/11/2006", font=font(20), fg_color=Colors.Danger, text_color=Colors.White, height=45)
+            self.AlertLabel = CTkLabel(self, text="Veuillez entrer toute les informations requise correctement" if self.dateOfBirth!="problem" else "Veuillez entrer la date dans le bon format ex: 15/11/2006", font=font(20), fg_color=Colors.Danger, text_color=Colors.White, height=45)
             self.AlertLabel.place(x=0,y=637, relwidth=1)
 
 

@@ -1,8 +1,11 @@
 from datetime import datetime
 from customtkinter import *
 from assets.code.ui import clear, Colors, font
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 from src.app import patients, navbar
+from src.app import navbar
+from assets.code.logic import calculateAge
+
 
 class VisitBox(CTkFrame):
     def __init__(self, master: CTkFrame, patientId=None):
@@ -13,6 +16,18 @@ class VisitBox(CTkFrame):
 
         self.patient = self.window.curr.execute("""SELECT * FROM "patients" WHERE id=?""", (patientId,)).fetchone()
 
+        self.prescription = None
+        self.medEntry=None
+        self.doseEntry=None
+        self.FRQ=None
+        self.btnindex=0
+
+        self.medsli=[]
+        self.doseli=[]
+        self.FRQli=[]
+        self.prescriptionLi={}
+        self.operations=None
+        
         self.view()
         self.logic()
         
@@ -116,7 +131,7 @@ class VisitBox(CTkFrame):
             corner_radius=15,
             font=font(20),
             hover_color=Colors.Sepia,
-            command = lambda:navbar.NavBar(self.master.master).patientsButton.invoke()
+            command = lambda:self.master.master.navBar.patientsButton.invoke()
         ).place(x=465, y=130)
 
         CTkButton(
@@ -129,7 +144,7 @@ class VisitBox(CTkFrame):
             command=self.addvisit
         ).place(x=175, y=578, width=250, height=60)
 
-        CTkCheckBox(
+        self.ordonnance_check = CTkCheckBox(
             self,
             text="Ordonnance",
             fg_color=Colors.Mandarin,
@@ -137,7 +152,9 @@ class VisitBox(CTkFrame):
             font=font(25),
             width=25,
             height=25,
-        ).place(x=152, y=520)
+        )
+        self.ordonnance_check.place(x=152, y=520)
+        self.ordonnance_check.bind("<Button-1>", lambda _ : [self.load()])
 
         CTkButton(self, image=CTkImage(
                 light_image=Image.open("assets/imgs/printer icon.png"), size=(35, 31)
@@ -145,7 +162,8 @@ class VisitBox(CTkFrame):
             fg_color=Colors.Mandarin,
             hover_color=Colors.Sepia,
             corner_radius=35,
-            text=""
+            text="",
+            command=lambda:self.show()
             ).place(x=453, y=578, width=60, height=60)
 
 
@@ -156,7 +174,6 @@ class VisitBox(CTkFrame):
 
         self.patientEntry.bind("<KeyRelease>", lambda _: self.suggest())
 
-        self.patientEntry.bind("<Return>", lambda _: self.suggest())
 
 
     def addvisit(self):
@@ -190,9 +207,6 @@ class VisitBox(CTkFrame):
         except:
             self.DEP="problem"
 
-
-
-
         if self.patientid and self.poids and self.taille and self.motif and self.conclution and self.montant and self.DEP!="problem":
             self.window.curr.execute("""INSERT INTO "visits" (patientId, datetime, reason, height, weight, conclusion, montant, DEP) VALUES (?,?,?,?,?,?,?,?)""",
             (
@@ -217,6 +231,10 @@ class VisitBox(CTkFrame):
                 self.patientEntry.delete(0, END)
                 self.patientEntry.insert(0, self.btns[btn])
                 self.suggestions.destroy()
+
+                self.refresh()
+                self.load()
+                
                 return
 
     def suggest(self):
@@ -248,6 +266,149 @@ class VisitBox(CTkFrame):
             if self.suggestions:
                 self.suggestions.destroy()
                 self.suggestions = None
+
+    def load(self):
+
+        if not self.ordonnance_check.get():
+            CTkFrame(self.master, height=680, width=680, fg_color=Colors.Coral).place(x=0,y=0)
+            self.refresh()
+            return
+
+
+        if len(self.patientEntry.get().split())==2:
+            patient = self.window.curr.execute("""SELECT * FROM "patients" WHERE firstName=? AND lastName =?""", self.patientEntry.get().split()).fetchone()
+        else:
+            patient=None
+    
+            
+        self.ordImage = Image.open("assets/imgs/ordonnance.png")
+        ordFont=ImageFont.truetype("assets/imgs/bold.ttf", 12)
+
+        self.I1 = ImageDraw.Draw(self.ordImage)
+        self.I1.text(xy=(295, 34), text=datetime.now().strftime("%d/%m/%Y"), fill=(11, 49, 139), font=ordFont)
+        if patient:
+            self.I1.text(xy=(307, 56), text=patient[1].capitalize(), fill=(11, 49, 139), font=ordFont)
+            self.I1.text(xy=(325, 79), text=patient[2].capitalize(), fill=(11, 49, 139), font=ordFont)
+            self.I1.text(xy=(304, 99), text=calculateAge(patient[3]), fill=(11, 49, 139), font=ordFont)
+
+
+        self.ordonnance = CTkLabel(self.master, image=CTkImage(self.ordImage, size=(430,600)), text="")
+        self.ordonnance.place(x=128, y=36)
+
+        self.operations = CTkFrame(self.ordonnance, width=428, height=355, fg_color=Colors.White, corner_radius=0)
+        self.operations.place(x=0, y=190)
+
+        if not self.medsli:
+
+            self.addMedBtn = CTkButton(
+            self.operations,
+            height=23,
+            width=23,
+            text="+",
+            fg_color=Colors.Mandarin,
+            text_color=Colors.White,
+            bg_color=Colors.White,
+            corner_radius=15,
+            font=font(20),
+            hover_color=Colors.Sepia,
+            command = lambda: self.addmed(0)
+        )
+            self.addMedBtn.pack(pady=10, padx=15, side="left")
+
+        else:
+            i=1
+            for med in self.medsli:
+                self.addmed(med, i)
+                i+=1
+
+
+    def show(self):
+            self.refresh()
+            i=0
+            for med in self.medsli:
+                self.I1.text(xy=(15,206+65*i), text=str(i+1), fill=(11, 49, 139), font=ImageFont.truetype("assets/imgs/bold.ttf", 15))
+                self.I1.text(xy=(32,206+65*i), text=med[0], fill=(11, 49, 139), font=ImageFont.truetype("assets/imgs/bold.ttf", 15))
+                self.I1.text(xy=(196,223+65*i), text=med[1], fill=(11, 49, 139), font=ImageFont.truetype("assets/imgs/bold.ttf", 13))
+                self.I1.text(xy=(372,206+65*i), text=med[2], fill=(11, 49, 139), font=ImageFont.truetype("assets/imgs/bold.ttf", 13))
+                i+=1
+            self.ordImage.show()
+
+                
+
+    def addmed(self, medsli=None, medindex=None):
+        try:
+            self.addMedBtn.destroy()
+        except:
+            pass
+
+        med_index = len([f for f in self.operations.winfo_children() if isinstance(f, CTkFrame)])+1
+        if med_index>=7:
+            return
+
+        self.prescription = CTkFrame(self.operations, fg_color=Colors.White, width=428, height=42, corner_radius=10, bg_color=Colors.White)
+        self.prescription.pack(pady=2.5)
+
+        CTkLabel(self.prescription, text=medindex if medindex else med_index, bg_color=Colors.White, text_color=Colors.ord_blue , height=14, width=14, corner_radius=15, font=font(11)).place(x=10, y=15)
+
+        self.medEntry = CTkEntry(self.prescription, text_color=Colors.Cadet, fg_color=Colors.White, bg_color=Colors.White, corner_radius=5, width=130, height=22, placeholder_text="Madicament", placeholder_text_color=Colors.Silver, justify=CENTER)
+        self.medEntry.place(x=38,y=10)
+
+        self.doseEntry = CTkEntry(self.prescription, text_color=Colors.Cadet, fg_color=Colors.White, bg_color=Colors.White, corner_radius=5, width=130, height=22, placeholder_text="Dose", placeholder_text_color=Colors.Silver, justify=CENTER)
+        self.doseEntry.place(x=177, y=10)
+
+        self.FRQ = CTkEntry(self.prescription, text_color=Colors.Cadet, fg_color=Colors.White, bg_color=Colors.White, corner_radius=5, width=50, height=22, placeholder_text="FRQ", placeholder_text_color=Colors.Silver, justify=CENTER)
+        self.FRQ.place(x=316, y=10)
+
+        self.addMedBtn = CTkButton(self.operations,height=23,width=23,text="+",fg_color=Colors.Mandarin,text_color=Colors.White,bg_color=Colors.White,corner_radius=15, font=font(20), hover_color=Colors.Sepia, command = lambda: self.addmed(self.btnindex))
+        self.addMedBtn.pack(pady=10, padx=15, side="right")
+
+
+        removebtn = CTkButton(self.prescription, width=23, height=23, text="X", fg_color=Colors.Mandarin, hover_color=Colors.Sepia, bg_color=Colors.White, corner_radius=5, command=lambda:self.removemed(removebtn))
+        removebtn.place(x=382, y=10)
+
+        self.prescriptionLi[removebtn]=self.prescription
+
+        if medsli:
+
+            if medsli[0]:
+                self.medEntry.insert(0, medsli[0])
+    
+            if medsli[1]:
+                self.doseEntry.insert(0, medsli[1])
+        
+            if medsli[2]:
+                self.FRQ.insert(0, medsli[2])
+        
+        self.refresh()
+
+
+
+    def removemed(self, btn):
+
+        self.refresh()
+
+        li=[entry.get() for entry in self.prescriptionLi[btn].winfo_children() if isinstance(entry, CTkEntry)]
+
+        if self.medsli:
+
+            self.medsli.pop(self.medsli.index(li))
+
+            self.load()
+        else:
+            self.prescriptionLi[btn].destroy()
+            del self.prescriptionLi[btn]
+    
+
+    def refresh(self):
+        self.medsli=[]
+
+        for prescription in self.operations.winfo_children():
+            if isinstance(prescription, CTkFrame):
+
+                self.medsli.append([entry.get() for entry in prescription.winfo_children() if isinstance(entry, CTkEntry)])
+                    
+
+
 
 class VisitsPage(CTkFrame):
     def __init__(self, master: CTkFrame, patientId=None) -> None:
