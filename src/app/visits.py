@@ -1,11 +1,10 @@
 from datetime import datetime
 from customtkinter import *
-from assets.code.ui import clear, Colors, font
+from assets.code.ui import clear, Colors, font, center
 from PIL import Image, ImageDraw, ImageFont
 from src.app import patients, navbar
 from src.app import navbar
 from assets.code.logic import calculateAge
-
 
 class VisitBox(CTkFrame):
     def __init__(self, master: CTkFrame, patientId=None):
@@ -208,7 +207,8 @@ class VisitBox(CTkFrame):
             self.DEP="problem"
 
         if self.patientid and self.poids and self.taille and self.motif and self.conclution and self.montant and self.DEP!="problem":
-            self.window.curr.execute("""INSERT INTO "visits" (patientId, datetime, reason, height, weight, conclusion, montant, DEP) VALUES (?,?,?,?,?,?,?,?)""",
+            self.refresh()
+            self.window.curr.execute("""INSERT INTO "visits" (patientId, datetime, reason, height, weight, conclusion, montant, DEP, medsli) VALUES (?,?,?,?,?,?,?,?,?)""",
             (
                 self.patientid,
                 datetime.now().strftime("%d/%m/%Y %H:%M"),
@@ -218,6 +218,7 @@ class VisitBox(CTkFrame):
                 self.conclution,
                 self.montant,
                 self.DEP,
+                str(self.medsli)
             )
             )
             self.window.conn.commit()
@@ -287,8 +288,8 @@ class VisitBox(CTkFrame):
         self.I1 = ImageDraw.Draw(self.ordImage)
         self.I1.text(xy=(295, 34), text=datetime.now().strftime("%d/%m/%Y"), fill=(11, 49, 139), font=ordFont)
         if patient:
-            self.I1.text(xy=(307, 56), text=patient[1].capitalize(), fill=(11, 49, 139), font=ordFont)
-            self.I1.text(xy=(325, 79), text=patient[2].capitalize(), fill=(11, 49, 139), font=ordFont)
+            self.I1.text(xy=(307, 56), text=patient[2].capitalize(), fill=(11, 49, 139), font=ordFont)
+            self.I1.text(xy=(325, 79), text=patient[1].capitalize(), fill=(11, 49, 139), font=ordFont)
             self.I1.text(xy=(304, 99), text=calculateAge(patient[3]), fill=(11, 49, 139), font=ordFont)
 
 
@@ -401,28 +402,480 @@ class VisitBox(CTkFrame):
 
     def refresh(self):
         self.medsli=[]
+        if self.operations:
+            for prescription in self.operations.winfo_children():
+                if isinstance(prescription, CTkFrame):
 
-        for prescription in self.operations.winfo_children():
-            if isinstance(prescription, CTkFrame):
-
-                self.medsli.append([entry.get() for entry in prescription.winfo_children() if isinstance(entry, CTkEntry)])
+                    self.medsli.append([entry.get() for entry in prescription.winfo_children() if isinstance(entry, CTkEntry)])
                     
 
+class VisitInfo(CTkFrame):
+    def __init__(self, master: CTkFrame, visitId):
+        super().__init__(master, corner_radius=0, fg_color=Colors.Coral)
 
+        self.window = master.window
+        self.master = master
+        self.visitId = visitId
+        self.editvisit=None
+
+        id , self.patientid, self.datetime, self.reason, self.height, self.weight, self.conclusion, self.montant, self.DEP, self.medsli = self.window.curr.execute("""SELECT * FROM "visits" WHERE id=?""",(self.visitId,)).fetchone()
+
+        self.view()
+
+    def view(self):
+        title = CTkLabel(self, text="Informations de visite", fg_color=Colors.Liver, text_color=Colors.White, font=font(38), height=76, width=430, corner_radius=15)
+        title.place(x=200, y=12)
+
+        self.visit_info_card = CTkFrame(self, fg_color=Colors.Cadet, bg_color=Colors.Coral, corner_radius=16, width=336, height=425)
+        self.visit_info_card.place(x=39 if len(self.medsli)>2 else 272, y=116)
+
+        CTkLabel(self.visit_info_card, text=f"Date: {str(self.datetime).split()[0]}", font=font(16), text_color=Colors.White, bg_color=Colors.Cadet).place(x=20, y=30)
+        CTkLabel(self.visit_info_card, text=f"Heure: {str(self.datetime).split()[1]}", font=font(16), text_color=Colors.White, bg_color=Colors.Cadet).place(x=20, y=75)
+        CTkLabel(self.visit_info_card, text=f"Motif: {self.reason}", font=font(16), text_color=Colors.White, bg_color=Colors.Cadet).place(x=20, y=120)
+        CTkLabel(self.visit_info_card, text=f"Poids: {self.weight}kg", font=font(16), text_color=Colors.White, bg_color=Colors.Cadet).place(x=20, y=165)
+        CTkLabel(self.visit_info_card, text=f"Taille: {self.height}cm", font=font(16), text_color=Colors.White, bg_color=Colors.Cadet).place(x=20, y=210)
+        CTkLabel(self.visit_info_card, text=f"Conclusion: {self.conclusion}", font=font(16), text_color=Colors.White, bg_color=Colors.Cadet).place(x=20, y=255)
+        CTkLabel(self.visit_info_card, text=f"Montant: {self.montant}DA", font=font(16), text_color=Colors.White, bg_color=Colors.Cadet).place(x=20, y=300)
+        CTkLabel(self.visit_info_card, text=f"DEP: {self.DEP}", font=font(16), text_color=Colors.White, bg_color=Colors.Cadet).place(x=20, y=345)
+        
+        CTkButton(self.visit_info_card, text="Modifier", fg_color=Colors.Mandarin, bg_color=Colors.Cadet, corner_radius=12, text_color=Colors.White, hover_color=Colors.Sepia, height=36, width=192, font=font(20), command=lambda:self.editview()).place(x=72, y=378)
+
+        if len(self.medsli)>2:
+            patient = self.window.curr.execute("""SELECT * from "patients" WHERE id=?""", (self.patientid,)).fetchone()
+
+            self.ordImage = Image.open("assets/imgs/ordonnance.png")
+            ordFont=ImageFont.truetype("assets/imgs/bold.ttf", 12)
+
+            self.I1 = ImageDraw.Draw(self.ordImage)
+            self.I1.text(xy=(295, 34), text=self.datetime.split()[0], fill=(11, 49, 139), font=ordFont)
+
+            self.I1.text(xy=(307, 56), text=patient[2].capitalize(), fill=(11, 49, 139), font=ordFont)
+            self.I1.text(xy=(325, 79), text=patient[1].capitalize(), fill=(11, 49, 139), font=ordFont)
+            self.I1.text(xy=(304, 99), text=calculateAge(patient[3]), fill=(11, 49, 139), font=ordFont)
+            
+
+            i=0
+            for med in eval(self.medsli):
+                self.I1.text(xy=(15,206+65*i), text=str(i+1), fill=(11, 49, 139), font=ImageFont.truetype("assets/imgs/bold.ttf", 20))
+                self.I1.text(xy=(32,206+65*i), text=med[0], fill=(11, 49, 139), font=ImageFont.truetype("assets/imgs/bold.ttf", 20))
+                self.I1.text(xy=(196,223+65*i), text=med[1], fill=(11, 49, 139), font=ImageFont.truetype("assets/imgs/bold.ttf", 17))
+                self.I1.text(xy=(372,206+65*i), text=med[2], fill=(11, 49, 139), font=ImageFont.truetype("assets/imgs/bold.ttf", 17))
+                i+=1
+
+            self.ordonnance = CTkLabel(self, image=CTkImage(self.ordImage, size=(360,507)), text="")
+            self.ordonnance.place(x=440, y=100)
+
+    def editview(self):
+        def close():
+            self.editvisit.destroy()
+            self.editvisit=None
+
+        if self.editvisit:
+            self.editvisit.focus()
+        else:
+            self.editvisit = CTkToplevel(fg_color=Colors.Cadet)
+            self.editvisit.protocol("WM_DELETE_WINDOW", lambda: close())
+            self.editvisit.resizable(False, False)
+            self.editvisit.title("Modifier la visite")
+            center(400, 500, self.editvisit)
+
+            CTkLabel(
+                self.editvisit,
+                text="Modifier la visite",
+                fg_color=Colors.Liver,
+                text_color=Colors.White,
+                font=font(22),
+                corner_radius=15,
+            ).place(x=82, y=16, height=51, width=246)
+
+            CTkLabel(self.editvisit, text="Date:", text_color=Colors.White, font=font(17)).place(x=110, y=90)
+            CTkLabel(self.editvisit, text="Heure:", text_color=Colors.White, font=font(17)).place(x=110, y=134)
+            CTkLabel(self.editvisit, text="Motif:", text_color=Colors.White, font=font(17)).place(x=110, y=178)
+            CTkLabel(self.editvisit, text="Poids:", text_color=Colors.White, font=font(17)).place(x=110, y=222)
+            CTkLabel(self.editvisit, text="Taille:", text_color=Colors.White, font=font(17)).place(x=110, y=265)
+            CTkLabel(self.editvisit, text="Conclusion:", text_color=Colors.White, font=font(17)).place(x=100, y=310)
+            CTkLabel(self.editvisit, text="DEP:", text_color=Colors.White, font=font(17)).place(x=110, y=350)
+            CTkLabel(self.editvisit, text="Montant:", text_color=Colors.White, font=font(17)).place(x=110, y=390)
+
+
+            self.DateEntry = CTkEntry(
+                self.editvisit,
+                fg_color=Colors.White,
+                corner_radius=10,
+                placeholder_text="",
+                text_color=Colors.Cadet,
+            )
+            self.DateEntry.place(x=215, y=90, width=140, height=26)
+            self.DateEntry.insert(0, str(self.datetime).split()[0])
+
+            self.TimeEntry = CTkEntry(
+                self.editvisit,
+                fg_color=Colors.White,
+                corner_radius=10,
+                placeholder_text="",
+                text_color=Colors.Cadet,
+            )
+            self.TimeEntry.place(x=215, y=134, width=140, height=26)
+            self.TimeEntry.insert(0, str(self.datetime).split()[1])
+            
+            self.MotifEntry = CTkEntry(
+                self.editvisit,
+                fg_color=Colors.White,
+                corner_radius=10,
+                placeholder_text="",
+                text_color=Colors.Cadet,
+            )
+            self.MotifEntry.place(x=215, y=178, width=140, height=26)
+            self.MotifEntry.insert(0, self.reason)
+
+            self.weightEntry = CTkEntry(
+                self.editvisit,
+                fg_color=Colors.White,
+                corner_radius=10,
+                placeholder_text="",
+                text_color=Colors.Cadet,
+            )
+            self.weightEntry.place(x=215, y=222, width=140, height=26)
+            self.weightEntry.insert(0, self.weight)
+
+            self.heightEntry = CTkEntry(
+                self.editvisit,
+                fg_color=Colors.White,
+                corner_radius=10,
+                placeholder_text="",
+                text_color=Colors.Cadet,
+            )
+            self.heightEntry.place(x=215, y=266, width=140, height=26)
+            self.heightEntry.insert(0, self.height)
+
+            self.conclusionEntry = CTkEntry(
+                self.editvisit,
+                fg_color=Colors.White,
+                corner_radius=10,
+                placeholder_text="",
+                text_color=Colors.Cadet,
+            )
+            self.conclusionEntry.place(x=215, y=310, width=140, height=26)
+            self.conclusionEntry.insert(0, self.conclusion)
+
+            self.DEPEntry = CTkEntry(
+                self.editvisit,
+                fg_color=Colors.White,
+                corner_radius=10,
+                placeholder_text="",
+                text_color=Colors.Cadet,
+            )
+            self.DEPEntry.place(x=215, y=354, width=140, height=26)
+            self.DEPEntry.insert(0, self.DEP)
+
+            self.montantEntry = CTkEntry(
+                self.editvisit,
+                fg_color=Colors.White,
+                corner_radius=10,
+                placeholder_text="",
+                text_color=Colors.Cadet,
+            )
+            self.montantEntry.place(x=215, y=398, width=140, height=26)
+            self.montantEntry.insert(0, self.montant)
+            
+
+
+            self.confirm = CTkButton(self.editvisit, text="Sauvegarder", text_color=Colors.White, fg_color=Colors.Silver, hover_color=Colors.Sepia, state=False, font=font(16), command=lambda: self.edit())
+            self.confirm.place(x=193, y=445, width=150, height=42)
+
+            self.cancel = CTkButton(self.editvisit, text="Annuler", fg_color=Colors.Silver, font=font(16), hover_color=Colors.Mandarin, command=close)
+            self.cancel.place(x=34, y=445, width=120, height=42)
+
+
+            entrys = [wdj for wdj in self.editvisit.winfo_children() if isinstance(wdj, CTkEntry)]    
+            for entry in entrys:
+                entry.bind("<KeyRelease>", lambda event:check())
+            
+            def check():
+
+                checks = {
+                    self.DateEntry.get() : str(self.datetime).split()[0],
+                    self.TimeEntry.get(): str(self.datetime).split()[1],
+                    self.MotifEntry.get() : str(self.reason),
+                    self.weightEntry.get() : str(self.weight),
+                    self.heightEntry.get() : str(self.height),
+                    self.DEPEntry.get() if self.DEPEntry.get() else None : str(self.DEP),
+                    self.montantEntry.get() : str(self.montant),
+                    self.conclusionEntry.get() : str(self.conclusion)
+                    }
+                
+                changed = any(i!=checks[i] for i in checks)
+                if  changed:
+                    self.confirm.configure(fg_color=Colors.Mandarin)
+                    self.confirm.configure(state=NORMAL)
+                else:
+                    self.confirm.configure(fg_color=Colors.Silver)
+                    self.confirm.configure(state=False)
+
+                
+    def edit(self):
+            def dateofBirthcheck(Bday):
+                try:
+                    if Bday:
+                        return datetime.strptime(Bday, "%d/%m/%Y")
+                    else:
+                        return None
+                except:
+                    return "problem"
+                
+            verification = True
+            New_infos = {"date" : dateofBirthcheck(self.DateEntry.get()),
+                        "time" : self.TimeEntry.get(),
+                        "reason" : self.MotifEntry.get(),
+                        "height" : float(self.heightEntry.get()),
+                        "weight" : float(self.weightEntry.get()),
+                        "montant" : int(self.montantEntry.get()),
+                        "conclusion" : self.conclusionEntry.get(),
+                        "DEP" : int(self.DEPEntry.get()),
+
+                        }
+                    
+            if any((not info or info=="problem") for info in list(New_infos.values())):
+                verification=False
+            try:
+                New_infos["height"] = float(New_infos["height"])
+                New_infos["weight"] = float(New_infos["weight"])
+                New_infos["montant"] = int(New_infos["montant"])
+                New_infos["DEP"] = int(New_infos["DEP"])
+            except:
+                verification = False
+
+            if verification:
+
+                self.window.curr.execute("""UPDATE "visits" SET 
+                datetime=?, 
+                reason=?, 
+                height=?, 
+                weight=?, 
+                conclusion=?, 
+                montant=?,
+                DEP=?
+                WHERE id=?""",
+                (
+                f"{New_infos['date'].strftime('%d/%m/%Y')} {New_infos['time']}", 
+                New_infos["reason"], 
+                New_infos["height"], 
+                New_infos["weight"],
+                New_infos["conclusion"], 
+                New_infos["montant"], 
+                New_infos["DEP"], 
+                self.visitId
+                )
+                )
+                self.window.conn.commit()
+
+                self.editvisit.destroy()
+
+                VisitInfo(self.master, self.visitId).place(x=400, y=0, width=879, height=681)
+            else:
+                self.AlertLabel = CTkLabel(self.editvisit, text="Veuillez entrer toute les informations requise correctement" if New_infos["date"]!="problem" else "Veuillez entrer la date dans le bon format ex: 15/11/2006", font=font(12), fg_color=Colors.Danger, text_color=Colors.White, height=20)
+                self.AlertLabel.place(x=0,y=483, relwidth=1)
+
+
+
+class VisitsHistoryList(CTkFrame):
+    def __init__(self, master:CTkFrame, patientId):
+        super().__init__(master, corner_radius=0, fg_color=Colors.Cadet)
+
+        self.window = master.window
+        self.master = master
+        self.patientId = patientId
+        self.currentpage = 0
+        self.Selectedvisit=None
+        self.patient = self.window.curr.execute("""SELECT * FROM "patients" WHERE id=?""", (self.patientId,)).fetchone()
+
+        self.view()
+        self.load()
+
+    def view(self):
+        header = CTkFrame(self, fg_color=Colors.Mandarin, corner_radius=0, height=75)
+        header.pack(fill="x")
+
+        CTkLabel(
+            header, text=f"historique des visites", font=font(23), text_color=Colors.White
+        ).place(x=55, y=10)
+        CTkLabel(
+            header, text=f"{str(self.patient[1]).capitalize()} {str(self.patient[2]).capitalize()}", font=font(23), text_color=Colors.Coral
+        ).place(x=72, y=41)
+
+        CTkButton(
+            header,
+            fg_color=Colors.Mandarin,
+            hover_color=Colors.Sepia,
+            corner_radius=0,
+            width=75,
+            height=74,
+            text="",
+            image=CTkImage(
+                light_image=Image.open("assets/imgs/add visit icon.png"),
+                size=(50, 50),
+            ),
+            command=lambda: VisitsPage(self.master.master.master).place(x=0, y=150, width=1280, height=682)
+        ).place(x=326)
+
+        self.searchvisit = CTkEntry(
+            self,
+            placeholder_text="Rechercher une visite...",
+            height=25,
+            font=font(15),
+            text_color=Colors.Cadet,
+            fg_color=Colors.White,
+            border_width=0,
+            corner_radius=0,
+        )
+        self.searchvisit.pack(fill="x")
+
+        self.visitsFrame = CTkFrame(self, fg_color=Colors.Cadet)
+        self.visitsFrame.pack(fill="both", expand=True)
+
+        self.load()
+
+        self.searchvisit.bind("<Key>", lambda _: self.load())
+        self.searchvisit.bind("<Return>", lambda _: self.load())
+
+
+    def historiquevisites(self, visitid):
+        VisitInfo(self.master, visitid).place(
+                        x=400, y=0, width=879, height=681
+                    ),
+
+    def load(self):
+        clear(self.visitsFrame)
+
+        visits = self.master.master.window.curr.execute(
+            """SELECT id, datetime FROM "visits" WHERE patientId=?""",(self.patientId,)
+        ).fetchall()
+
+        pages = []
+
+        search = self.searchvisit.get().lower()
+        if not visits:
+            CTkLabel(self, text="Aucune visite", text_color=Colors.White, font=font(24)).place(relx=0.5, rely=0.5, anchor=CENTER)
+            return
+
+        for id, datetime in visits:
+            if not pages or len(pages[-1]) == 4:
+                pages.append([])
+            
+            if search: 
+                if str(datetime).startswith(search):   
+                    pages[-1].append((id, datetime))
+            else:
+                pages[-1].append((id, datetime))
+
+        self.visitsButtons = {}
+
+        for id, datetime in pages[self.currentpage]:
+            visitCard = CTkFrame(
+                self.visitsFrame,
+                width=350,
+                height=100,
+                corner_radius=20,
+                fg_color=Colors.Coral,
+            )
+            visitCard.pack(pady=15)
+
+            visitsButton = CTkButton(
+                visitCard,
+                text=f"{str(datetime).split()[0]}",
+                font=font(30),
+                corner_radius=15,
+                height=41,
+                width=20 * len(str(datetime).split()[0]),
+                hover_color=Colors.Cadet,
+                text_color=Colors.Mandarin,
+                fg_color=Colors.Coral,
+                command=lambda :None
+            )
+            visitsButton.place(x=5, y=10)
+
+            self.visitsButtons[visitsButton] = id
+            visitsButton.bind("<Button-1>", lambda _:[
+                    self.select(button(_)[0]),
+                    self.historiquevisites(button(_)[1])
+                ])
+
+            def button(event):
+                for btn in self.visitsButtons:
+                    if str(btn) in str(event.widget):
+                        return btn, self.visitsButtons[btn]
+
+            CTkLabel(
+                visitCard,
+                text=f"{str(datetime).split()[1]} ",
+                font=font(20),
+                text_color=Colors.White,
+            ).place(x=21, y=59)
+
+        CTkButton(
+            self.visitsFrame,
+            text="<",
+            font=font(25),
+            height=40,
+            width=40,
+            fg_color=Colors.Mandarin if self.currentpage else Colors.Silver,
+            corner_radius=20,
+            hover_color=Colors.Sepia if self.currentpage else Colors.Silver,
+            command=lambda: self.update(-1 if self.currentpage else 0),
+        ).place(x=104, y=522)
+ 
+        CTkLabel(
+            self.visitsFrame,
+            text=self.currentpage + 1,
+            font=font(30),
+            text_color=Colors.White,
+        ).place(x=190, y=523)
+
+        CTkButton(
+            self.visitsFrame,
+            text=">",
+            font=font(25),
+            height=40,
+            width=40,
+            fg_color=Colors.Mandarin if self.currentpage < len(pages) - 1 else Colors.Silver,
+            corner_radius=20,
+            hover_color=Colors.Sepia if self.currentpage < len(pages) - 1 else Colors.Silver,
+            command=lambda: self.update(+1 if self.currentpage < len(pages) - 1 else 0),
+        ).place(x=238, y=522)
+
+    def select(self, button):
+        for visit_button in self.visitsButtons:
+            visit_button.configure(fg_color=Colors.Coral, text_color=Colors.Mandarin, hover=True)
+
+        button.configure(fg_color=Colors.Mandarin, text_color=Colors.Cadet, hover=False)
+        self.Selectedvisit = self.visitsButtons[button]
+
+    def update(self, num):
+        if num:
+            self.currentpage += num
+            self.load()
+            
+        if self.Selectedvisit:
+            for visit_button in self.visitsButtons:
+                if self.Selectedvisit == self.visitsButtons[visit_button]:
+                    self.select(visit_button)
+ 
 
 class VisitsPage(CTkFrame):
-    def __init__(self, master: CTkFrame, patientId=None) -> None:
+    def __init__(self, master: CTkFrame, patientId=None, historiquedesvisites=False) -> None:
         clear(master)
         super().__init__(master, corner_radius=0, fg_color=Colors.Coral)
         self.pack(fill="both", expand=True)
 
         self.patientId = patientId
-
+        self.historique = historiquedesvisites
         self.window = master.window
         self.master = master
-
 
         self.view()
 
     def view(self):
-        VisitBox(self, self.patientId).place(x=680, y=0, height=682, width=600)
+        if not self.historique:
+            VisitBox(self, self.patientId).place(x=680, y=0, height=682, width=600)
+        else:
+            VisitsHistoryList(self, self.patientId).place(x=0, y=0, width=400, height=682)

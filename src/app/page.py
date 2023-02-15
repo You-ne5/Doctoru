@@ -1,4 +1,5 @@
-from customtkinter import *
+from customtkinter import CTkFrame, CTk
+
 from assets.code.ui import Colors
 from src.app import navbar, infobar
 from assets.code.ui import clear
@@ -11,10 +12,10 @@ class Page(CTkFrame):
 
         self.window = window
 
-        self.infoBar = infobar.InfoBar(self)
-        self.infoBar.place(x=0, y=0, height=30, relwidth=1)
+        self.info_bar = infobar.InfoBar(self)
+        self.info_bar.place(x=0, y=0, height=30, relwidth=1)
 
-        self.navBar = navbar.NavBar(self)
-        self.navBar.place(x=0, y=30, height=120, relwidth=1)
-        self.navBar.homeButton.invoke()
+        self.nav_bar = navbar.NavBar(self)
+        self.nav_bar.place(x=0, y=30, height=120, relwidth=1)
+        self.nav_bar.homeButton.invoke()
 

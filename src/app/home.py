@@ -311,7 +311,7 @@ class ActionBar(CTkFrame):
             x=403, y=90
         )
 
-        addVisitButton = CTkButton(
+        self.addVisitButton = CTkButton(
             self,
             fg_color=Colors.Cadet,
             hover_color=Colors.Sepia,
@@ -324,7 +324,7 @@ class ActionBar(CTkFrame):
             ),
             command=lambda: VisitsPage(self.master.master).place(x=0, y=150, width=1280, height=682)
         )
-        addVisitButton.place(x=546, y=10)
+        self.addVisitButton.place(x=546, y=10)
         CTkLabel(
             self, text="Ajouter Visite", font=font(16), text_color=Colors.White
         ).place(x=527, y=90)

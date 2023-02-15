@@ -1,0 +1,17 @@
+button argument template:
+    CTkButton(
+            master,
+
+            text = ,
+            text_color = ,
+            font = ,
+        
+            width = ,
+            height = ,
+            
+            fg_color = ,
+            hover_color =,
+            
+            command =,
+        ).place(x= , y= )
+
