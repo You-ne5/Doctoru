@@ -749,7 +749,6 @@ class PatientInfos(CTkFrame):
             self.maladiesChroniquesEntry.bind("<KeyRelease>", lambda event:check())
             self.keywordsEntry.bind("<KeyRelease>", lambda event:check())
             
-
             def check():
 
                 keywords = self.keywordsEntry.get() if self.keywordsEntry.get() else None
@@ -801,9 +800,13 @@ class PatientInfos(CTkFrame):
                         new_maladieschroniques,
                         new_keywords
                         ]
-            
+            print(new_infos)
+            if any(not info or info=="problem" for info in new_infos[:4]):
+                verification = False
+            else:
+                verification = True
 
-            if new_firstName and NlastName and NdateOfBirth!= "problem" and NdateOfBirth and Ngender:
+            if verification:
                 self.window.curr.execute("""UPDATE "patients" SET 
                 firstName = ?, 
                 lastName = ?, 
@@ -813,15 +816,24 @@ class PatientInfos(CTkFrame):
                 maladiesChroniques = ?,
                 keywords = ?
                 WHERE id = ?""",
-                (new_firstName, NlastName, NdateOfBirth.strftime("%d/%m/%Y"), Ngender, NphoneNumber, Nmaladieschroniques, Nkeywords, self.patientId))
+                (new_first_name, new_last_name, new_date_of_birth.strftime("%d/%m/%Y"), new_gender, new_phone_number, new_maladieschroniques, new_keywords, self.patientId))
+
                 self.window.conn.commit()
 
                 self.editpatient.destroy()
 
                 PatientInfos(self.master, self.patientId).place(x = 400, y = 0, width = 879, height = 681)
             else:
-                self.AlertLabel  =  CTkLabel(self.editpatient, text = "Veuillez entrer toute les informations requise correctement" if self.dateOfBirth!= "problem" else "Veuillez entrer la dade dans le bon format ex: 15/11/2006", font = font(20), fg_color = Colors.Danger, text_color = Colors.White, height = 45)
-                self.AlertLabel.place(x = 0,y = 637, relwidth = 1)
+                self.AlertLabel  =  CTkLabel(
+                    self.editpatient, 
+                    text = "Veuillez entrer toute les informations requise correctement" if self.dateOfBirth!= "problem" else "Veuillez entrer la dade dans le bon format ex: 15/11/2006", 
+                    font = font(20), 
+                    fg_color = Colors.Danger, 
+                    text_color = Colors.White, 
+                    height = 45
+                    )
+                
+                self.AlertLabel.place(x= 0, y= 483, relwidth= 1)
 
             
     def deletepatient(self):

@@ -327,14 +327,13 @@ class VisitBox(CTkFrame):
             self.refresh()
             i=0
             for med in self.medsli:
+                details = f"{med[2]} pendant {med[1]}"
                 self.I1.text(xy=(15,206+65*i), text=str(i+1), fill=(11, 49, 139), font=ImageFont.truetype("assets/imgs/bold.ttf", 15))
                 self.I1.text(xy=(32,206+65*i), text=med[0], fill=(11, 49, 139), font=ImageFont.truetype("assets/imgs/bold.ttf", 15))
-                self.I1.text(xy=(196,223+65*i), text=med[1], fill=(11, 49, 139), font=ImageFont.truetype("assets/imgs/bold.ttf", 13))
-                self.I1.text(xy=(372,206+65*i), text=med[2], fill=(11, 49, 139), font=ImageFont.truetype("assets/imgs/bold.ttf", 13))
+                self.I1.text(xy=(56,227+65*i), text = f"- {details}", fill=(11, 49, 139), font=ImageFont.truetype("assets/imgs/bold.ttf", 13))
                 i+=1
-            self.ordImage.show()
 
-                
+            self.ordImage.show() 
 
     def addmed(self, medsli=None, medindex=None):
         try:
@@ -367,7 +366,7 @@ class VisitBox(CTkFrame):
         removebtn = CTkButton(self.prescription, width=23, height=23, text="X", fg_color=Colors.Mandarin, hover_color=Colors.Sepia, bg_color=Colors.White, corner_radius=5, command=lambda:self.removemed(removebtn))
         removebtn.place(x=382, y=10)
 
-        self.prescriptionLi[removebtn]=self.prescription
+        self.prescriptionLi[removebtn] = self.prescription
 
         if medsli:
 
@@ -382,10 +381,7 @@ class VisitBox(CTkFrame):
         
         self.refresh()
 
-
-
     def removemed(self, btn):
-
         self.refresh()
 
         li=[entry.get() for entry in self.prescriptionLi[btn].winfo_children() if isinstance(entry, CTkEntry)]
@@ -398,7 +394,6 @@ class VisitBox(CTkFrame):
         else:
             self.prescriptionLi[btn].destroy()
             del self.prescriptionLi[btn]
-    
 
     def refresh(self):
         self.medsli=[]
@@ -453,7 +448,6 @@ class VisitInfo(CTkFrame):
             self.I1.text(xy=(325, 79), text=patient[1].capitalize(), fill=(11, 49, 139), font=ordFont)
             self.I1.text(xy=(304, 99), text=calculateAge(patient[3]), fill=(11, 49, 139), font=ordFont)
             
-
             i=0
             for med in eval(self.medsli):
                 self.I1.text(xy=(15,206+65*i), text=str(i+1), fill=(11, 49, 139), font=ImageFont.truetype("assets/imgs/bold.ttf", 20))
@@ -496,7 +490,6 @@ class VisitInfo(CTkFrame):
             CTkLabel(self.editvisit, text="Conclusion:", text_color=Colors.White, font=font(17)).place(x=100, y=310)
             CTkLabel(self.editvisit, text="DEP:", text_color=Colors.White, font=font(17)).place(x=110, y=350)
             CTkLabel(self.editvisit, text="Montant:", text_color=Colors.White, font=font(17)).place(x=110, y=390)
-
 
             self.DateEntry = CTkEntry(
                 self.editvisit,
@@ -599,19 +592,18 @@ class VisitInfo(CTkFrame):
                     self.MotifEntry.get() : str(self.reason),
                     self.weightEntry.get() : str(self.weight),
                     self.heightEntry.get() : str(self.height),
-                    self.DEPEntry.get() if self.DEPEntry.get() else None : str(self.DEP),
+                    self.DEPEntry.get() : str(self.DEP),
                     self.montantEntry.get() : str(self.montant),
                     self.conclusionEntry.get() : str(self.conclusion)
                     }
                 
                 changed = any(i!=checks[i] for i in checks)
-                if  changed:
+                if changed:
                     self.confirm.configure(fg_color=Colors.Mandarin)
                     self.confirm.configure(state=NORMAL)
                 else:
                     self.confirm.configure(fg_color=Colors.Silver)
                     self.confirm.configure(state=False)
-
                 
     def edit(self):
             def dateofBirthcheck(Bday):
@@ -634,9 +626,8 @@ class VisitInfo(CTkFrame):
                         "DEP" : int(self.DEPEntry.get()),
 
                         }
-                    
-            if any((not info or info=="problem") for info in list(New_infos.values())):
-                verification=False
+            if any((not info or info=="problem") for info in list(New_infos.values())[:-1]):
+                verification = False
             try:
                 New_infos["height"] = float(New_infos["height"])
                 New_infos["weight"] = float(New_infos["weight"])

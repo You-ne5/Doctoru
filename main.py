@@ -1,9 +1,11 @@
 import sqlite3
 from customtkinter import CTk
+import json
+
 from assets.code.ui import Colors, center
 from src.auth import login
 from src.app import page
-import json
+
 
 class App(CTk):
     def __init__(self) -> None:
