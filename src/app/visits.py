@@ -3,7 +3,7 @@ from customtkinter import *
 from assets.code.ui import clear, Colors, font, center
 from PIL import Image, ImageDraw, ImageFont
 from src.app import patients, navbar
-from src.app import navbar
+
 from assets.code.logic import calculateAge
 
 class VisitBox(CTkFrame):
@@ -130,7 +130,7 @@ class VisitBox(CTkFrame):
             corner_radius=15,
             font=font(20),
             hover_color=Colors.Sepia,
-            command = lambda:self.master.master.navBar.patientsButton.invoke()
+            command = lambda:self.master.master.nav_bar.patientsButton.invoke()
         ).place(x=465, y=130)
 
         CTkButton(
@@ -283,7 +283,7 @@ class VisitBox(CTkFrame):
     
             
         self.ordImage = Image.open("assets/imgs/ordonnance.png")
-        ordFont=ImageFont.truetype("assets/imgs/bold.ttf", 12)
+        ordFont=ImageFont.truetype("assets/fonts/bold.ttf", 12)
 
         self.I1 = ImageDraw.Draw(self.ordImage)
         self.I1.text(xy=(295, 34), text=datetime.now().strftime("%d/%m/%Y"), fill=(11, 49, 139), font=ordFont)
@@ -328,9 +328,9 @@ class VisitBox(CTkFrame):
             i=0
             for med in self.medsli:
                 details = f"{med[2]} pendant {med[1]}"
-                self.I1.text(xy=(15,206+65*i), text=str(i+1), fill=(11, 49, 139), font=ImageFont.truetype("assets/imgs/bold.ttf", 15))
-                self.I1.text(xy=(32,206+65*i), text=med[0], fill=(11, 49, 139), font=ImageFont.truetype("assets/imgs/bold.ttf", 15))
-                self.I1.text(xy=(56,227+65*i), text = f"- {details}", fill=(11, 49, 139), font=ImageFont.truetype("assets/imgs/bold.ttf", 13))
+                self.I1.text(xy=(50,206+65*i), text=str(i+1), fill=(11, 49, 139), font=ImageFont.truetype("assets/fonts/bold.ttf", 20))
+                self.I1.text(xy=(67,206+65*i), text=med[0], fill=(11, 49, 139), font=ImageFont.truetype("assets/fonts/bold.ttf", 20))
+                self.I1.text(xy=(91,242+65*i), text = f"- {details}", fill=(11, 49, 139), font=ImageFont.truetype("assets/fonts/TT Norms Pro Regular.otf", 17))
                 i+=1
 
             self.ordImage.show() 
@@ -413,7 +413,8 @@ class VisitInfo(CTkFrame):
         self.visitId = visitId
         self.editvisit=None
 
-        id , self.patientid, self.datetime, self.reason, self.height, self.weight, self.conclusion, self.montant, self.DEP, self.medsli = self.window.curr.execute("""SELECT * FROM "visits" WHERE id=?""",(self.visitId,)).fetchone()
+        id , self.patientid, self.datetime, self.reason, self.height, self.weight, self.conclusion, self.montant, self.DEP, medsli = self.window.curr.execute("""SELECT * FROM "visits" WHERE id=?""",(self.visitId,)).fetchone()
+        self.medsli = eval(medsli)
 
         self.view()
 
@@ -422,8 +423,8 @@ class VisitInfo(CTkFrame):
         title.place(x=200, y=12)
 
         self.visit_info_card = CTkFrame(self, fg_color=Colors.Cadet, bg_color=Colors.Coral, corner_radius=16, width=336, height=425)
-        self.visit_info_card.place(x=39 if len(self.medsli)>2 else 272, y=116)
-
+        self.visit_info_card.place(x=39 if self.medsli else 272, y=116)
+        #visit infos
         CTkLabel(self.visit_info_card, text=f"Date: {str(self.datetime).split()[0]}", font=font(16), text_color=Colors.White, bg_color=Colors.Cadet).place(x=20, y=30)
         CTkLabel(self.visit_info_card, text=f"Heure: {str(self.datetime).split()[1]}", font=font(16), text_color=Colors.White, bg_color=Colors.Cadet).place(x=20, y=75)
         CTkLabel(self.visit_info_card, text=f"Motif: {self.reason}", font=font(16), text_color=Colors.White, bg_color=Colors.Cadet).place(x=20, y=120)
@@ -433,28 +434,54 @@ class VisitInfo(CTkFrame):
         CTkLabel(self.visit_info_card, text=f"Montant: {self.montant}DA", font=font(16), text_color=Colors.White, bg_color=Colors.Cadet).place(x=20, y=300)
         CTkLabel(self.visit_info_card, text=f"DEP: {self.DEP}", font=font(16), text_color=Colors.White, bg_color=Colors.Cadet).place(x=20, y=345)
         
-        CTkButton(self.visit_info_card, text="Modifier", fg_color=Colors.Mandarin, bg_color=Colors.Cadet, corner_radius=12, text_color=Colors.White, hover_color=Colors.Sepia, height=36, width=192, font=font(20), command=lambda:self.editview()).place(x=72, y=378)
+        edit_visit_button = CTkButton(self.visit_info_card, text="Modifier", fg_color=Colors.Mandarin, bg_color=Colors.Cadet, corner_radius=12, text_color=Colors.White, hover_color=Colors.Sepia, height=36, width=192, font=font(20), command=lambda:self.editview())
+        edit_visit_button.place(x=72, y=378)
 
-        if len(self.medsli)>2:
-            patient = self.window.curr.execute("""SELECT * from "patients" WHERE id=?""", (self.patientid,)).fetchone()
+        delete_visit_button = CTkButton(self, text="Supprimer la visite", fg_color=Colors.Danger, bg_color=Colors.Coral, corner_radius=12, text_color=Colors.White, hover_color=Colors.Sepia, height=61, width=336, font=font(20), command=lambda:self.delete_visit())
+        delete_visit_button.place(x=40, y=570)
+
+        if self.medsli:
+            first_name, last_name, date_of_birth = self.window.curr.execute("""SELECT firstName, lastName, dateOfBirth from "patients" WHERE id=?""", (self.patientid,)).fetchone()
 
             self.ordImage = Image.open("assets/imgs/ordonnance.png")
-            ordFont=ImageFont.truetype("assets/imgs/bold.ttf", 12)
+            ordFont=ImageFont.truetype("assets/fonts/bold.ttf", 12)
+            ORDBLUE = (11, 49, 139)
 
             self.I1 = ImageDraw.Draw(self.ordImage)
-            self.I1.text(xy=(295, 34), text=self.datetime.split()[0], fill=(11, 49, 139), font=ordFont)
+            self.I1.text(xy=(295, 34), text=self.datetime.split()[0], fill=ORDBLUE, font=ordFont)
 
-            self.I1.text(xy=(307, 56), text=patient[2].capitalize(), fill=(11, 49, 139), font=ordFont)
-            self.I1.text(xy=(325, 79), text=patient[1].capitalize(), fill=(11, 49, 139), font=ordFont)
-            self.I1.text(xy=(304, 99), text=calculateAge(patient[3]), fill=(11, 49, 139), font=ordFont)
+            self.I1.text(xy=(307, 56), text=last_name.capitalize(), fill=ORDBLUE, font=ordFont)
+            self.I1.text(xy=(325, 79), text=first_name.capitalize(), fill=ORDBLUE, font=ordFont)
+            self.I1.text(xy=(304, 99), text=calculateAge(date_of_birth), fill=ORDBLUE, font=ordFont)
             
-            i=0
-            for med in eval(self.medsli):
-                self.I1.text(xy=(15,206+65*i), text=str(i+1), fill=(11, 49, 139), font=ImageFont.truetype("assets/imgs/bold.ttf", 20))
-                self.I1.text(xy=(32,206+65*i), text=med[0], fill=(11, 49, 139), font=ImageFont.truetype("assets/imgs/bold.ttf", 20))
-                self.I1.text(xy=(196,223+65*i), text=med[1], fill=(11, 49, 139), font=ImageFont.truetype("assets/imgs/bold.ttf", 17))
-                self.I1.text(xy=(372,206+65*i), text=med[2], fill=(11, 49, 139), font=ImageFont.truetype("assets/imgs/bold.ttf", 17))
-                i+=1
+            med_index=0
+            for med_name, med_dose, med_frq in self.medsli:
+                details = f"{med_frq} pendant {med_dose}"
+                distance_between_meds = 70
+
+                #med number
+                self.I1.text(
+                    xy=(25, 206 + distance_between_meds * med_index), 
+                    text=str(med_index+1)+"- ", 
+                    fill=ORDBLUE, 
+                    font=ImageFont.truetype("assets/fonts/bold.ttf", 20)
+                    )
+                #med name
+                self.I1.text(
+                    xy=(42, 206 + distance_between_meds * med_index), 
+                    text=med_name, 
+                    fill=ORDBLUE, 
+                    font=ImageFont.truetype("assets/fonts/bold.ttf", 20)
+                    )
+                #med med infos
+                self.I1.text(
+                    xy=(91, 235 + distance_between_meds * med_index), 
+                    text = f"- {details}", 
+                    fill=ORDBLUE, 
+                    font=ImageFont.truetype("assets/fonts/TT Norms Pro Regular.otf", 17)
+                    )
+                
+                med_index+=1
 
             self.ordonnance = CTkLabel(self, image=CTkImage(self.ordImage, size=(360,507)), text="")
             self.ordonnance.place(x=440, y=100)
@@ -462,15 +489,18 @@ class VisitInfo(CTkFrame):
     def editview(self):
         def close():
             self.editvisit.destroy()
-            self.editvisit=None
+            self.editvisit = None
 
         if self.editvisit:
             self.editvisit.focus()
         else:
             self.editvisit = CTkToplevel(fg_color=Colors.Cadet)
-            self.editvisit.protocol("WM_DELETE_WINDOW", lambda: close())
             self.editvisit.resizable(False, False)
+
             self.editvisit.title("Modifier la visite")
+
+            self.editvisit.protocol("WM_DELETE_WINDOW", lambda: close())
+            
             center(400, 500, self.editvisit)
 
             CTkLabel(
@@ -666,6 +696,28 @@ class VisitInfo(CTkFrame):
             else:
                 self.AlertLabel = CTkLabel(self.editvisit, text="Veuillez entrer toute les informations requise correctement" if New_infos["date"]!="problem" else "Veuillez entrer la date dans le bon format ex: 15/11/2006", font=font(12), fg_color=Colors.Danger, text_color=Colors.White, height=20)
                 self.AlertLabel.place(x=0,y=483, relwidth=1)
+    
+    def delete_visit(self):
+        self.del_visit_window  =  CTkToplevel(fg_color = Colors.Coral)
+        self.del_visit_window.resizable(False, False)
+        center(574, 245, self.del_visit_window)
+
+        def close():
+            self.del_visit_window.destroy()
+
+        def delete():
+            self.window.curr.execute("""DELETE FROM "visits" WHERE id = ?""", (self.visitId,))
+            self.window.conn.commit()
+
+            close()
+            CTkFrame(self.master, height=682, width=879, fg_color=Colors.Coral).place(x=401, y=0)
+            VisitsHistoryList(self.master, self.patientid).place(x = 0, y = 0, width = 400, height = 682)
+
+        CTkLabel(self.del_visit_window, text = "Supprimer le patient", fg_color = Colors.Liver, font = font(25), text_color = Colors.White, corner_radius = 15).place(x = 124, y = 34, width = 320, height = 70)
+        CTkLabel(self.del_visit_window, text = f"Étes vous sure de vouloir supprimer cette visite?", font = font(16), text_color = Colors.White).place(relx = 0.5, rely = 0.51, anchor = CENTER)
+
+        CTkButton(self.del_visit_window, text = "Supprimer", fg_color = Colors.Danger, text_color = Colors.White, hover_color = Colors.Danger_hover, command = delete, font = font(15)).place(x = 308, y = 178, width = 130, height = 50)
+        CTkButton(self.del_visit_window, text = "Annuler", fg_color = Colors.Silver, text_color = Colors.White, hover_color = Colors.Mandarin, command = close, font = font(15)).place(x = 140, y = 178, width = 130, height = 50)
 
 
 

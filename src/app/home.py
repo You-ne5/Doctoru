@@ -287,7 +287,7 @@ class ActionBar(CTkFrame):
                 light_image=Image.open("assets/imgs/add patient icon.png"),
                 size=(50, 50),
             ),
-            command=lambda: self.master.master.navBar.patientsButton.invoke()
+            command=lambda: self.master.master.nav_bar.patientsButton.invoke()
         )
         addPatientButton.place(x=270, y=10)
         CTkLabel(

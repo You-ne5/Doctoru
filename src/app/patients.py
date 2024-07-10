@@ -800,7 +800,7 @@ class PatientInfos(CTkFrame):
                         new_maladieschroniques,
                         new_keywords
                         ]
-            print(new_infos)
+            
             if any(not info or info=="problem" for info in new_infos[:4]):
                 verification = False
             else:
@@ -827,18 +827,17 @@ class PatientInfos(CTkFrame):
                 self.AlertLabel  =  CTkLabel(
                     self.editpatient, 
                     text = "Veuillez entrer toute les informations requise correctement" if self.dateOfBirth!= "problem" else "Veuillez entrer la dade dans le bon format ex: 15/11/2006", 
-                    font = font(20), 
+                    font = font(12), 
                     fg_color = Colors.Danger, 
                     text_color = Colors.White, 
-                    height = 45
+                    height = 20
                     )
                 
-                self.AlertLabel.place(x= 0, y= 483, relwidth= 1)
+                self.AlertLabel.place(x= 0, y= 440, relwidth= 1)
 
             
     def deletepatient(self):
 
-        
         self.toplevel  =  CTkToplevel(fg_color = Colors.Coral)
         self.toplevel.resizable(False, False)
         center(574, 245, self.toplevel)
@@ -861,8 +860,6 @@ class PatientInfos(CTkFrame):
         CTkButton(self.toplevel, text = "Annuler", fg_color = Colors.Silver, text_color = Colors.White, hover_color = Colors.Mandarin, command = close, font = font(15)).place(x = 140, y = 178, width = 130, height = 50)
 
         
-
-
 class PatientsPage(CTkFrame):
     def __init__(self, master: CTkFrame) -> None:
         clear(master)
